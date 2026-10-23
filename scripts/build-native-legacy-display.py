@@ -197,7 +197,7 @@ while i<len(args):
     elif value=='-Xclang' and args[i+1].startswith('-W'):i+=1
     elif not value.startswith('-W'):cmd.append(value)
     i+=1
-cmd+=['-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unnecessary-virtual-specifier','-Wno-c99-designator','-Wno-reorder-init-list',
+cmd+=['-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unknown-warning-option','-Wno-c99-designator','-Wno-reorder-init-list',
       '-Wno-deprecated-enum-enum-conversion','-I',str(ROOT/'.cache/xnu-work/osfmk')]
 run(cmd,cwd=r['directory'])
 hid_source=ROOT/'kits/sheng/HidInputProbe.cpp'
@@ -298,3 +298,4 @@ sources.extend([ROOT/'drivers/NativeMobileDisplay/NativeGOPPresenter.cpp',ROOT/'
     bindings={n:hex(v) for n,v in bindings.items()},virtual_entries=358,owned_entries=owned,inherited_native_entries=native,
     guarded_backend_leaves=[i for i in pure if i not in (213,337)],original_instructions_modified=False,driver_initialized=False,display_presented=False,desktop=False),indent=2)+'\n')
 print('Built genuine original Legacy inheritance/dispatch; seven backend leaves still guarded, runtime lifecycle unqualified')
+
