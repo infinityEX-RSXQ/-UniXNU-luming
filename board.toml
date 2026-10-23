@@ -138,7 +138,11 @@ slide = "-0x1000000"
 # BOOTSTRAP CANDIDATE: empty roots until the original-kernelcache IOPCIFamily export
 # (IOPCIMessageFromMach) and storage bindings are audited. This only lets prelink emit
 # a kernel artifact; it is not a bootable userland root set.
-roots = []
+# BOOTSTRAP CANDIDATE: one independent kext so NativePrelink can emit; the full
+# luming root set needs the original-kernelcache IOPCIFamily/storage binding audit.
+roots = [
+  "com.apple.kec.Libm",
+]
 
 #
 # TODO(device) / TODO(kernel) - fill only with values derived from the luming target
