@@ -85,8 +85,9 @@ CONFIG_XNU_SOURCE_MOCKFS=y
 # CONFIG_XNU_ZONE_PGZ_ALIGNMENT_PROBE=y
 # No GPU driver for Adreno 825 exists yet.
 # CONFIG_XNU_NATIVE_ADRENO=y
-# Requires the original-kernelcache AES audit for this kernelcache.
-# CONFIG_XNU_NATIVE_AES=y
+# Enabled for the NativeRamBlock dependency (build-xnu-4k-baseline.sh:182-186).
+# TODO(kernel): the original-kernelcache AES audit is still outstanding.
+CONFIG_XNU_NATIVE_AES=y
 # sheng-specific PMGR integration, not for luming.
 # CONFIG_XNU_SHENG_PMGR=y
 
