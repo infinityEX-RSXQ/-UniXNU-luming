@@ -83,7 +83,6 @@ archives = [
   "build-arm-driver.py NativeAES",
   "build-native-aes-bindings.py",
   "build-arm-driver.py NativeRamBlock",
-  "build-native-legacy-display.py",
   "build-libpthread-kernel.py",
   "build-mockfs-fixture.py",
 ]
@@ -301,3 +300,4 @@ props = [
   { name = "label", type = "s", value = "cont_splash_region" },
   { name = "reg", type = "x", value = ["0x0", "0xfc800000", "0x0", "0x2b00000"] },
 ]
+
