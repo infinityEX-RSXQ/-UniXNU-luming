@@ -75,8 +75,10 @@ if component in ('NativeVirtioBlock', 'NativeRamBlock', 'NativeUfs'):
     if args.verified_root_bundle:
         command += ['-DNATIVE_VERIFIED_BLOCK_MULTI_POLICY=1']
 if component == 'NativeUfs':
+    # BOOTSTRAP: the VerifiedRoot kit is not built yet; keep the include paths for a
+    # later verified-block build but do not define NATIVE_VERIFIED_BLOCK here.
     command += ['-I', str(ROOT / 'kits/VerifiedRoot/include'), '-I', str(ROOT / 'drivers/NativeVirtioBlock'),
-                '-DNATIVE_VERIFIED_BLOCK=1', '-DNATIVE_VERIFIED_BLOCK_MULTI_POLICY=1', '-mgeneral-regs-only']
+                '-mgeneral-regs-only']
 if component=='NativeOfflineGPU':
     command += ['-I',str(ROOT/'drivers/NativeVirtioConsole')]
 if component in ('NativeLegacyDisplay','NativeHidInput'):
@@ -105,6 +107,18 @@ if deployment != (2, 0x110000):
     raise SystemExit(f'Unexpected platform deployment {deployment}')
 archive = out / ('lib' + component + '.a')
 archive.unlink(missing_ok=True)
-subprocess.run(['xcrun', 'ar', 'rcs', archive, destination], check=True)
+objects = [destination]
+if component == 'NativeUfs':
+    # BOOTSTRAP-ONLY no-op providers: XNU's diagnostic patches reference these symbols
+    # even when boot progress / legacy display are disabled. Remove them once the real
+    # archives are enabled.
+    stub_c = out / 'bootstrap_probe_stubs.c'
+    stub_c.write_text('void boot_progress_poll(void) {}\n'
+                      'void native_legacy_display_probe(void) {}\n', encoding='utf-8')
+    stub_o = out / 'bootstrap_probe_stubs.o'
+    subprocess.run(['xcrun', 'clang', '-target', 'arm64-apple-ios17.0',
+                    '-c', str(stub_c), '-o', str(stub_o)], check=True)
+    objects.append(stub_o)
+subprocess.run(['xcrun', 'ar', 'rcs', archive, *objects], check=True)
 print(f'{component}: -Werror build and actual ARM64/iOS 17 object audit passed')
 
