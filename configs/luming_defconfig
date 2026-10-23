@@ -69,7 +69,8 @@ CONFIG_XNU_DT_PANIC_REGION=y
 # first kernel failure becomes the missing Darwin-22 platform archives (expected gate).
 CONFIG_XNU_BOOT_PROGRESS=n
 # mockfs test file, for the bring-up fixture.
-CONFIG_XNU_SOURCE_MOCKFS=y
+# BOOTSTRAP: mockfs fixture is not linked into the bootstrap kernel.
+CONFIG_XNU_SOURCE_MOCKFS=n
 
 # --- owner/root path: kept off until the Darwin 22 audit passes --------------
 # These are the Darwin 23 owner-path flags of UniXNU-sheng; they are NOT enabled
