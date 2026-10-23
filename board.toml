@@ -1,0 +1,256 @@
+# Board description of the Xiaomi Civi 5 Pro (luming, SM8735 / Snapdragon 8s Gen 4).
+# Read by the UniXNU build driver (scripts/unixnu/config.py, payload.py, ...).
+#
+# PRE-BUILD STATUS: the platform values below were measured on the device on 2026-10-22
+# from a read-only capture of the stock Android system (live device tree, /proc/iomem,
+# dmesg, GPT and sysfs; the device was restored to unmodified stock afterwards).  Values
+# that only a boot of this port can provide (kernel prelink slide/roots, DarwinBoot owned
+# window, root-volume UUID, trust cache/Data seed, platform seed, UEFI FD base/size) stay
+# TODO(...) with the procedure in PORTING.md and docs/STATUS.md.  Do not flash an image
+# built from this file until those TODO(device) values have been confirmed on the device.
+#
+# Target OS userland: iOS 16.7.16, iPhone10,3 / d22ap identity (iPhone X), i.e. the
+# Darwin 22.6.0 / xnu-8796-era userland.  The source kernel is the community
+# xnu-8796.141.3 reference (the shipped 20H392 kernelcache identifies as
+# xnu-8796.142.1.703.8~1; see refs/UniXNU-guacamole/NOTES.md:182-184).
+#
+# Identity facts (verified, refs/ios16-ipsw/ + Lead cross-check):
+#   product iPhone10,3, version 16.7.16, build 20H392, device_class d22ap,
+#   ApChipID 0x8015, ApBoardID 0x06, platform t8015.
+
+[board]
+name = "luming"                    # output directory out/luming/
+soc = "SM8735"
+description = "Xiaomi Civi 5 Pro (SM8735, iOS 16.7.16 iPhone10,3 userland; pre-build)"
+kit = "luming"                     # package/ of this repository appears as kits/luming in the build tree
+
+# The target OS image: Apple's official iPhone10,3 iOS 16.7.16 (20H392) restore image.
+# Give --ipsw PATH to use a local file; without it the remote url is read with range
+# requests so only the needed members are fetched.
+[ipsw]
+url = "https://updates.cdn-apple.com/2025FallFCS/fullrestores/122-77006/1158E502-D76D-4226-AA06-ED5E30CD1111/iPhone10,3,iPhone10,6_16.7.16_20H392_Restore.ipsw"
+product = "iPhone10,3"
+version = "16.7.16"
+build = "20H392"
+device_class = "d22ap"
+chip_id = 0x8015
+board_id = 6
+fetch = ["KernelCache", "DeviceTree", "StaticTrustCache", "Cryptex1,SystemTrustCache"]
+
+# NOTE: the whole-IPSW sha256 is ece1194f7e233e9109c5790a8d23a4564a10a254e15ec5b09978a343265568fb
+# (6,171,035,648 bytes; verified via ipsw.me v4 API + HTTP HEAD).  It is a
+# whole-image hash, not a member pin, so it does not belong in [ipsw.sha256].
+#
+# Member pins measured on 2026-10-22 by HTTP-range extraction (no whole-IPSW download):
+#   kernelcache.release.iphone10b: 18,204,358 B, zip CRC-32 1b3e0564 verified
+#     (backup/analysis/kernel/fetch_kernelcache.py + kernelcache.release.iphone10b.json)
+#   DeviceTree.d22ap.im4p: 33,719 B, extracted in refs/ios16-ipsw/Firmware/all_flash/
+# StaticTrustCache/Cryptex1,SystemTrustCache remain TODO(ipsw): their members are not
+# extracted yet, so no pin is asserted for them.
+[ipsw.sha256]
+"kernelcache.release.iphone10b" = "2d6a13d040aaf87cec09bb6906d43e9bd8cea951e43d1aa1cd62707dfdc5aaec"
+"DeviceTree.d22ap.im4p" = "480e8b0888949b4128b7aa2cd254497581c69e1bafa596a760b2fa955a8a6368"
+
+# The raw image for the userdata partition: the OS and SystemOS disk images of the
+# IPSW behind a manifest.  first_lba/last_lba are the GPT entry "userdata" of LUN 0.
+# MEASURED 2026-10-22 from the live GPT of /dev/block/sda (head/tail dump; parsed in
+# backup/analysis/device-live/LIVE-FACTS.json): last_lba - first_lba + 1 = 125,494,779
+# LBAs x 4096 B = 514,026,614,784 B (478.7 GiB).  These LBAs are specific to this
+# 512 GB unit; re-measure for a different storage SKU (see PORTING.md section 4.2).
+[userdata]
+first_lba = 3124736                # measured (GPT entry "userdata", /dev/block/sda)
+last_lba = 128619514               # measured (GPT entry "userdata", /dev/block/sda)
+lba_bytes = 4096                   # measured (GPT logical block size; fastboot getvar logical-block-size: 0x1000)
+windows = [
+  { name = "OS", component = "OS" },
+  { name = "SystemOS", component = "Cryptex1,SystemOS" },
+]
+# The base image sizes are in refs/ios16-ipsw/BuildManifest-summary.json (OS
+# 2,743,074,816 B, SystemVolume 4,730,814,044 B), which fits the measured 478.7 GiB
+# userdata partition.
+
+[kernel]
+defconfig = "luming_defconfig"
+# Archive builders of the kernel step, in order.  Each entry is a script of the build
+# tree with its arguments; only builders that exist in the UniXNU base repository are
+# listed here (unixnu kernel.build_archives() fails on a missing script).
+archives = [
+  "build-corecrypto-14.py",
+  "build-corecrypto-14.py --namespace",
+  "build-libpthread-kernel.py",
+  "build-mockfs-fixture.py",
+]
+# TODO(kernel): the Darwin 22 platform/archive builders are NOT ported yet, so they are
+# not listed (they exist only in the UniXNU-sheng device repository and are Darwin 23
+# qualified).  Port/audit each one for xnu-8796 / Darwin 22 before adding its entry:
+#   build-arm-driver.py ArmDTPlatform    -> build/armdt-platform/libArmDTPlatform.a
+#   build-arm-driver.py ArmCpu           -> build/armcpu/libArmCpu.a
+#   build-arm-driver.py NativeUfs        -> build/native-ufs/libNativeUfs.a
+#   build-arm-driver.py NativeRamBlock   -> build/native-ram-block/libNativeRamBlock.a
+#   build-native-legacy-display.py       -> build/native-legacy-display/libNativeLegacyDisplay.late.a
+#   build-boot-progress.py               -> build/boot-progress/libBootProgress.a (only when
+#                                           CONFIG_XNU_BOOT_PROGRESS is re-enabled; it is n for now)
+# Until then CONFIG_XNU_ARM_DT_PLATFORM / CONFIG_XNU_ARMCPU / CONFIG_XNU_NATIVE_UFS /
+# CONFIG_XNU_NATIVE_RAM_BLOCK / CONFIG_XNU_NATIVE_LEGACY_DISPLAY are enabled in the
+# defconfig but their archives are missing: the kernel link is documented as expected to
+# fail at this gate (docs/STATUS.md S3/S5, windows-ci gate `darwin22-kernel-archives`).
+# This mirrors the community iOS 16 state (UniXNU docs/devices/nuwa.md:14-15,
+# "platform archives not passing").
+
+[kernel.prelink]
+tool = "kits/NativePrelink/emit_prelink.py"
+kernel = "build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837.unstripped.noctf"
+# The native kernel is xnu-8796.141.3; the shipped iOS 16.7.16 kernelcache is
+# Darwin 22.6.0 / xnu-8796.142.1.703.8~1 / T8015 (refs/UniXNU-guacamole/NOTES.md:182-184),
+# extracted size 18,204,358 B IM4P/LZFSE.  refs/UniXNU-guacamole/NOTES.md:180-181
+# quotes 50,937,884 B for its own decode of that member; the pin below follows this
+# workspace's decode, 50,937,856 B (backup/analysis/kernel/kernelcache.decoded).
+# The prelink of that kernelcache against the native kernel FAILED on the closest
+# documented iOS 16 port (missing _vfs_getvfs_with_vfsops candidate, plus missing
+# _kalloc_sparse_prelink_index_version / _native_prelink_security_init_version
+# exports; refs/UniXNU-guacamole/NOTES.md:197-210).  That port shipped a monolithic
+# kernel instead.  Therefore NO prelink number is written here yet - copying sheng's
+# iPadOS 17.7.11 values is explicitly forbidden (refs/UniXNU-nuwa/docs/DECISIONS.md:
+# 147-150: "sheng/fuxi [kernel.prelink] values must not be copied, every one of them";
+# original Chinese in that file).
+#
+# MEASURED 2026-10-22 (kernel analyst; IPSW range-read + local LZFSE decode): the
+# 20H392 target kernelcache is pinned by the sha256 of its decompressed arm64 Mach-O
+# slice - that is what scripts/unixnu/ipsw.py:kernelcache() checks (not the IPSW member
+# and not the fat container).  Target: iPhone10,3 / 16.7.16 / 20H392, Darwin 22.6.0 /
+# xnu-8796.142.1.703.8~1 / T8015; 50,937,856 B after decode.
+#   decoded arm64 Mach-O   sha256 2ec297bac95bcba01046fd0148e97e7e5885c05a6c18827f39f534ba375c1221
+#   IPSW member (18,204,358 B) sha256 2d6a13d040aaf87cec09bb6906d43e9bd8cea951e43d1aa1cd62707dfdc5aaec
+#   decompressed fat container sha256 1c1e2d36a0c0daef07e4c6d2ac544eed08ab8e17a045ce8f95195a099bdadcc4
+# Evidence: backup/analysis/kernel/ (local workspace, not committed).
+kernelcache_sha256 = "2ec297bac95bcba01046fd0148e97e7e5885c05a6c18827f39f534ba375c1221"
+#
+# TODO(device) / TODO(kernel) - fill only with values derived from the luming target
+# kernelcache (iPhone X 16.7.16 / 20H392).  Do not copy another board's prelink:
+#   slide = "<slide from the prelink ABI analysis>"                  # UNVERIFIED
+#   early_security_init = "com.apple.driver.AppleMobileFileIntegrity=<address>"  # UNVERIFIED
+#   roots = [ ... Darwin 22 components kept from the original kernelcache ... ]   # TODO
+# The roots list is empty on purpose: no Darwin 22 / iOS 16 prelink of a UniXNU
+# native kernel has been demonstrated in the reference material, so listing bundle
+# identifiers would be fabricated.  See docs/STATUS.md S3/S4.
+
+[firmware]
+# Mu-Silicium UEFI port of this board lives in a separate repository (uefi-luming,
+# built by the uefi-builder teammate; align these paths with it).
+# TODO(uefi) / TODO(device): every line of this section is provisional and UNVERIFIED
+# for luming.  It mirrors UniXNU-sheng's structure and uefi-builder's SM8735 scaffold
+# (upstream Mu-Silicium has Platforms/Xiaomi/onyxPkg for the POCO F7 on the same SoC,
+# but no luming package; lumingPkg is the device fork).
+config = "luming"                  # Resources/Configs/luming.toml in the Mu-Silicium checkout (--uefi)
+dsc = "Platforms/Xiaomi/lumingPkg/luming.dsc"
+fd = "Build/lumingPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
+preflight = ["scripts/check-luming.py"]
+submodules = ["Common/Mu", "Common/Mu_OEM_Sample", "Silicium-ACPI", "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
+# patches = []                     # TODO(device): add only if the SM8735 GIC/ACPI symptom appears
+packages = [
+  "{uefi}",
+  "{uefi}/Platforms/Xiaomi",
+  "{tree}/package",
+  "{tree}/drivers/DarwinBoot",
+  "{edk2}",
+  "{uefi}/Common/Mu",
+  "{uefi}/Common/Mu_OEM_Sample",
+  "{uefi}/Silicon/Qualcomm",
+  "{uefi}/Silicon/Silicium",
+  "{uefi}/Silicium-ACPI",
+  "{uefi}/Silicium-ACPI/Platforms/Xiaomi",
+  "{uefi}/Silicium-ACPI/Silicon/Qualcomm",
+]
+
+[firmware.defines]
+# Provisional, matching the uefi-builder scaffold; TODO(device) until uefi-luming is built.
+ENABLE_SECUREBOOT = "1"
+DEVICE_MODEL = "luming"
+MEMORY_PROTECTION = "TRUE"
+SHIP_MODE = "FALSE"
+BUILDID_STRING = "luming-prebuild"
+
+# The ramdisk of the boot image: a FAT volume with the UniXNU config, the kernel, its
+# device tree and the optional trust cache and Data seed.  DarwinBoot is in the FV.
+[payload]
+volume = "LUMINGESP"               # FAT label, <= 11 characters
+size_mib = 192
+loader = "firmware"
+title = "UniXNU luming pre-build"
+# MEASURED 2026-10-22: this unit is the 12 GiB SKU.  /proc/meminfo reports MemTotal
+# 11,503,328 kB (~11 GiB usable) and the live DT /memory regions total 12,098,654,208 B
+# (~11.27 GiB) after the reserved carve-outs; both match 12 GiB, not 16 GiB.  Use
+# 0x400000000 and re-measure for a 16 GiB unit.  This is the physical DRAM size, not
+# the DarwinBoot window ([payload.adt] owned_memory_size stays TODO(device)).
+dram_size = "0x300000000"
+# TODO(device): panic_screen stays disabled for the pre-build set.  The payload step
+# patches the panic screen in with scripts/patch-xnu-entry-probe.py, which exists only
+# in the UniXNU-sheng device repository (not in the base repo and not vendored here).
+# Enable it together with a Darwin 22-audited copy of that script.
+panic_screen = false
+skip_setup_tool = "scripts/seed-data-skip-setup.py"
+# TODO(device): accepted trust-cache bundle hashes.  They depend on the owner bundle
+# built from the original StaticTrustCache/Cryptex1,SystemTrustCache of the 20H392 IPSW;
+# no bundle exists for luming yet.  Leave commented: any --trust-cache is then allowed
+# by the payload step, which is only acceptable during bring-up on an unlocked board.
+# trust_cache_sha256 = ["<sha256>"]
+# TODO(device) / TODO(kernel): every driver-specific boot argument below is unmeasured;
+# only the documented generic ones are enabled.  Extend once drivers exist.
+kernel_args = [
+  "-v",
+  "serial=3",
+  "debug=0x14e",
+  "boot-progress=2",
+]
+
+# The ADT sidecar.  The tool always writes the iPhone10,3 / D22AP identity (see
+# docs/guide/mobilegestalt.md); ipad_identity=true keeps the four activation/
+# security-status properties the base payload step gates behind --ipad-identity
+# (documented delta from UniXNU-sheng in PORTING.md "identity deviations").
+[payload.adt]
+tool = "scripts/make-luming-adt.py"
+chip_id = "8015"                   # A11 CPID of the iPhone X userland (BuildManifest ApChipID); identity seed, not silicon
+# TODO(device): DarwinBoot contiguous window (256 MiB..8 GiB, 2 MiB steps).  The
+# candidate 1 GiB follows nuwa's D-002 first move (512 MiB-1 GiB) and must be replaced
+# by the actual contiguous allocation the luming UEFI can provide.
+owned_memory_size = "0x40000000"
+# TODO(device): root volume UUID of the SystemOS APFS volume of the 20H392 image.
+# Can be produced offline on macOS from the extracted SystemVolume dmg (APFS
+# `diskutil`/`apfsutil`); not stored in any repository.
+# root_match_volume_uuid = "00000000-0000-0000-0000-000000000000"
+cpu_regs = "0,0x100,0x200,0x300,0x400,0x500,0x600,0x700"   # measured (live DT /cpus/cpu@*/reg: 8 cores, Affinity1 0..0x700)
+psci_method = "smc"                # measured enable-method "psci" (live DT /cpus); smc is the Qualcomm PSCI conduit convention
+packed_data_ramdisk = true
+ipad_identity = true
+unique_chip_id = "required"        # the platform seed is not stored in any repository
+
+# Image parameters.  MEASURED 2026-10-22: the stock luming boot.img
+# (backup/luming-20261022-211723/stock-rom/boot.img, 100,663,296 B) parses as an
+# Android boot image header v4 (magic "ANDROID!", header_version 4, header_size 1584,
+# pagesize 4096), matching the stock recovery BoardConfig.mk:47,50,53-55.  A v4 header
+# stores no load addresses: the offsets below are the stock build's mkbootimg
+# arguments (kernel_offset 0x8000 is the mkbootimg default, not overridden in the
+# recovery BoardConfig).  `unixnu bootimg` passes these to mkbootimg; the base driver's
+# unpack verification is v0-v2-oriented, so a v4 image needs the v4 verify patch
+# (refs/UniXNU-dada/docs/patches/unixnu-bootimg-header-v4.patch) - TODO(toolchain),
+# tracked in docs/STATUS.md.
+[bootimg.image]
+base = 0x0
+kernel_offset = 0x8000
+ramdisk_offset = 0x01000000
+tags_offset = 0x100
+pagesize = 4096
+header_version = 4
+
+# The stock ABL on the Xiaomi SM8xxx family powers the panel off when the device tree
+# has no splash region (sheng needs this).  MEASURED 2026-10-22 from the live DT
+# reserved-memory node (reg <0x0 0xfc800000 0x0 0x2b00000>) and dmesg
+# ("reserved mem: 0x00000000fc800000..0x00000000ff2fffff (44032 KiB) map non-reusable
+# splash_region"; "[drm] cont_splash enabled").  TODO(device): confirm on a real boot
+# that the luming ABL accepts the node.
+[[bootimg.dtb_node]]
+path = "/reserved-memory/splash_region"
+props = [
+  { name = "label", type = "s", value = "cont_splash_region" },
+  { name = "reg", type = "x", value = ["0x0", "0xfc800000", "0x0", "0x2b00000"] },
+]

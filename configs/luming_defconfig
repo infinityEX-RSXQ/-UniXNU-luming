@@ -1,0 +1,107 @@
+# Kernel configuration of the luming image.
+# CONFIG_XNU_<NAME> becomes XNU_<NAME> for scripts/build-xnu-4k-baseline.sh.
+#
+# Target: iOS 16.7.16 userland = Darwin 22.6.0, kernelcache xnu-8796.142.1.703.8~1,
+# built from the public xnu-8796.141.3 source reference.
+#
+# RISK - DARWIN 22 ARCHIVE COMPATIBILITY
+# The platform/archive builders in the UniXNU base tree are qualified against
+# Darwin 23 / xnu-10063 (the mainline iPadOS 17 route).  The community iOS 16 route
+# documents the Darwin 22 platform archives as still in progress ("Platform
+# archives | not passing; ArmCpu includes and the Darwin 22 archive build are still
+# in progress", UniXNU docs/devices/nuwa.md:14-15;
+# refs/UniXNU-nuwa/reports/driver-archives-plan/).  Only flags listed in
+# docs/guide/build-kernel.md are used below; every flag whose archive has not been
+# demonstrated on Darwin 22 is commented out rather than enabled as if it worked.
+#
+# NOTE: the UniXNU defconfig parser accepts comments only on their own lines.
+# Do not append inline "# ..." comments after a value: the value regex consumes
+# the whole remainder and rejects it (scripts/unixnu/config.py:parse_config).
+
+CONFIG_XNU_BUILD_ARCHIVES=y
+
+# --- source providers (built from the pinned sources) ------------------------
+CONFIG_XNU_SOURCE_CORECRYPTO14=y
+CONFIG_XNU_SOURCE_PTHREAD=y
+
+# --- platform experts / CPU --------------------------------------------------
+# Apple-format device tree platform expert: /chosen, /cpus, /arm-io are required.
+CONFIG_XNU_ARM_DT_PLATFORM=y
+# Architectural CPU provider (see the Darwin 22 risk note above).
+CONFIG_XNU_ARMCPU=y
+# Not a QEMU virt target.
+CONFIG_XNU_ARMVIRT_PLATFORM=n
+
+# --- storage -----------------------------------------------------------------
+# UFS storage driver (luming UFS controller values: TODO(device)).
+CONFIG_XNU_NATIVE_UFS=y
+# RAM block driver for the Data seed path.
+CONFIG_XNU_NATIVE_RAM_BLOCK=y
+# No VirtIO transport on this board.
+CONFIG_XNU_NATIVE_VIRTIO_BLOCK=n
+# Derive 4 KiB code-signature hashes from verified 16 KiB blocks.
+CONFIG_XNU_NATIVE_CS_HASH_CACHE=y
+# Trust cache runtime initialisation.
+CONFIG_XNU_TRUST_CACHE_RUNTIME=y
+
+# --- display / input ---------------------------------------------------------
+# The iOS 16 userland drives IOMobileFramebuffer; the legacy display provider is
+# what the UniXNU-sheng iPad port uses.  TODO(kernel)/UNVERIFIED: choose between the
+# legacy and mobile providers only after the Darwin 22 display audit; the luming
+# panel driver itself does not exist yet.
+CONFIG_XNU_NATIVE_LEGACY_DISPLAY=y
+CONFIG_XNU_NATIVE_MOBILE_DISPLAY=n
+
+# --- kernel facilities -------------------------------------------------------
+# Architectural timer entry.
+CONFIG_XNU_NATIVE_ARCH_TIMER=y
+# ARMv8.1 PAN support.
+CONFIG_XNU_NATIVE_PAN=y
+# Read the panic region from the device tree.
+CONFIG_XNU_DT_PANIC_REGION=y
+# Boot-progress checkpoints are a bring-up aid, but scripts/build-xnu-4k-baseline.sh:64-69
+# hard-requires the audited UFS/owner-root, Virtio and source-corecrypto chain when this
+# is enabled, and it runs build-boot-progress.py (a UniXNU-sheng script, absent from the
+# base repo).  TODO(kernel): enable it only after CONFIG_XNU_OWNER_ROOT_AUDIT=y and
+# CONFIG_XNU_NATIVE_VIRTIO_BLOCK=y are audited for Darwin 22 and build-boot-progress.py is
+# ported; otherwise the kernel step exits before compiling.  With it off, the runner's
+# first kernel failure becomes the missing Darwin-22 platform archives (expected gate).
+CONFIG_XNU_BOOT_PROGRESS=n
+# mockfs test file, for the bring-up fixture.
+CONFIG_XNU_SOURCE_MOCKFS=y
+
+# --- owner/root path: kept off until the Darwin 22 audit passes --------------
+# These are the Darwin 23 owner-path flags of UniXNU-sheng; they are NOT enabled
+# here because their archive/patched-kernel prerequisites are Darwin 23.  Enable
+# one at a time once the matching native archive builds for Darwin 22.
+# CONFIG_XNU_VERIFIED_ROOT_PROBE=y
+# CONFIG_XNU_OWNER_ROOT_AUDIT=y
+# CONFIG_XNU_OWNER_ROOT_TRUST=y
+# CONFIG_XNU_OWNER_CACHE_MOUNT=y
+# CONFIG_XNU_OWNER_CACHE_STARTUP=y
+# CONFIG_XNU_OWNER_BOOT_MANIFEST=y
+# CONFIG_XNU_OWNER_DATA_MOUNT=y
+# CONFIG_XNU_OWNER_UNION_SYSTEMOS=y
+# CONFIG_XNU_ZONE_PGZ_ALIGNMENT_PROBE=y
+# No GPU driver for Adreno 825 exists yet.
+# CONFIG_XNU_NATIVE_ADRENO=y
+# Requires the original-kernelcache AES audit for this kernelcache.
+# CONFIG_XNU_NATIVE_AES=y
+# sheng-specific PMGR integration, not for luming.
+# CONFIG_XNU_SHENG_PMGR=y
+
+# The native kernel is prelinked against the original kernelcache on the sheng
+# route.  The iOS 16 prelink is NOT demonstrated (see [kernel.prelink] in
+# board.toml and docs/STATUS.md S3); "prelinked" is kept so the build path is
+# exercised, and it must be revisited together with the prelink values.
+# TODO(kernel)/UNVERIFIED
+CONFIG_XNU_CRYPTO_BOOTSTRAP="prelinked"
+
+# The scratch Data volume UUID is a per-image identity.  sheng's UUID belongs to
+# the iPadOS 17.7.11 image and must not be reused
+# (refs/UniXNU-nuwa/docs/DECISIONS.md:150).  TODO(device): generate one for the
+# luming image and pin it here.
+# CONFIG_XNU_OWNER_DATA_VOLUME_UUID="00000000-0000-0000-0000-000000000000"
+
+# Prebuilt verified archives are image-specific and absent for luming.
+CONFIG_XNU_EXTRA_LD_ARCHIVES=""

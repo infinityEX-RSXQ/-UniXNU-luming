@@ -1,0 +1,50 @@
+﻿# UniXNU driver selection validation (2026-10-22T23:31:20.3477025+08:00)
+base: D:\civitoip20\UniXNU-main\UniXNU-main
+device: D:\civitoip20\UniXNU-luming
+out: D:\civitoip20\out-luming2
+
+$ python unixnu defconfig luming_defconfig -D D:\civitoip20\UniXNU-luming --out D:\civitoip20\out-luming2
+unixnu: developed and tested on macOS only; the kernel step needs Xcode and --skip-setup needs hdiutil
+== configuration luming_defconfig -> D:\civitoip20\out-luming2\luming\.config
+exit=0
+
+$ python unixnu status -D D:\civitoip20\UniXNU-luming --out D:\civitoip20\out-luming2
+unixnu: developed and tested on macOS only; the kernel step needs Xcode and --skip-setup needs hdiutil
+device   D:\civitoip20\UniXNU-luming (luming)
+output   D:\civitoip20\out-luming2\luming
+config   D:\civitoip20\out-luming2\luming\.config
+driver   ArmCpu                   base
+driver   ArmDTPlatform            base
+driver   ArmVirtPlatform          base
+driver   DarwinBoot               base
+driver   NativeAES                base
+driver   NativeAdreno             base
+driver   NativeGeniSpi            base
+driver   NativeHidInput           base
+driver   NativeKeyStoreEvents     base
+driver   NativeMetal              base
+driver   NativeMobileDisplay      base
+driver   NativeRamBlock           base
+driver   NativeUfs                base
+driver   NativeVirtioBlock        base
+driver   NativeVirtioConsole      base
+kit      AdrenoFirmware           base
+kit      AdrenoPM4                base
+kit      AirNir                   base
+kit      ArmSmmu4K                base
+kit      NativePrelink            base
+kit      VerifiedRoot             base
+package  device                   device
+package  main                     base
+patch    libpthread               base
+patch    mesa                     base
+patch    xnu                      base
+refer    AvailabilityVersions     git pinned 933f9360f1b7
+refer    IOStorageFamily          git pinned e45fbe30a787
+refer    corecrypto-2023          git pinned 11fba65b12d8
+refer    edk2                     git pinned cfb93724a06f
+refer    libdispatch              git pinned 30fe6a7d9453
+refer    libplatform              git pinned a00a4cc36da2
+refer    libpthread               git pinned c0e60fb5ecfc
+refer    xnu                      git pinned d8b80295118e
+exit=0

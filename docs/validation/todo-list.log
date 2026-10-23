@@ -1,0 +1,122 @@
+﻿UniXNU-luming preflight: D:\civitoip20\UniXNU-luming
+ok    python 3.12.14
+ok    required files present (15)
+ok    repository layout
+ok    board.toml [board]
+ok    board.toml [ipsw] identity matches the verified d22ap iOS 16.7.16 build
+ok    board.toml [userdata] measured GPT entry 3124736..128619514 (478.72 GiB)
+ok    [kernel] archives builders exist in the base repo (4 entries)
+ok    [kernel.prelink] kernelcache_sha256 pinned (decompressed arm64 Mach-O)
+ok    board.toml [payload] dram_size=0x300000000 measured (12 GiB SKU)
+ok    board.toml [payload]/[payload.adt]/[firmware] wiring
+ok    [bootimg] measured header-v4 geometry and splash-reserved-memory node
+ok    D22AP identity data (60 /product, 3 /buttons properties)
+ok    scripts parse as Python
+ok    configs/luming_defconfig (20 flags, 14 enabled)
+WARN  feeds.toml: no extra sources (fine for the pre-build stage; device drivers come from package/ or submodules)
+WARN  package/LumingKit/Kit.toml: no drivers/kexts/overlays yet (honest pre-build state)
+ok    TOML files parse (board, feeds, package)
+ok    ADT tool: measured generation, --check + address verification, truncation refusal, unmeasured-value refusal, placeholder encoding test
+board.toml:10: TODO(device)
+board.toml:43: TODO(device)
+board.toml:43: TODO(ipsw)
+board.toml:79: TODO(kernel)
+board.toml:124: TODO(device)
+board.toml:124: TODO(kernel)
+board.toml:136: TODO(uefi)
+board.toml:136: TODO(device)
+board.toml:145: TODO(device)
+board.toml:162: TODO(device)
+board.toml:180: TODO(device)
+board.toml:182: TODO(device)
+board.toml:188: TODO(device)
+board.toml:193: TODO(device)
+board.toml:193: TODO(kernel)
+board.toml:209: TODO(device)
+board.toml:213: TODO(device)
+board.toml:245: TODO(device)
+docs\STATUS.md:21: TODO(device)
+docs\STATUS.md:26: TODO(device)
+docs\STATUS.md:65: TODO(device)
+docs\STATUS.md:104: TODO(kernel)
+docs\STATUS.md:127: TODO(device)
+docs\STATUS.md:127: TODO(kernel)
+docs\STATUS.md:128: TODO(kernel)
+docs\STATUS.md:134: TODO(kernel)
+docs\VALIDATION.md:47: TODO(device)
+docs\VALIDATION.md:47: TODO(kernel)
+docs\VALIDATION.md:87: TODO(device)
+docs\VALIDATION.md:121: TODO(device)
+package\LumingKit\Kit.toml:23: TODO(uefi)
+package\LumingKit\Kit.toml:28: TODO(device)
+package\LumingKit\Kit.toml:29: TODO(device)
+package\LumingKit\Kit.toml:30: TODO(device)
+PORTING.md:106: TODO(device)
+PORTING.md:148: TODO(ipsw)
+PORTING.md:157: TODO(device)
+PORTING.md:158: TODO(device)
+PORTING.md:159: TODO(device)
+PORTING.md:160: TODO(device)
+PORTING.md:161: TODO(device)
+PORTING.md:171: TODO(device)
+PORTING.md:171: TODO(kernel)
+PORTING.md:172: TODO(device)
+PORTING.md:173: TODO(kernel)
+PORTING.md:189: TODO(device)
+PORTING.md:189: TODO(kernel)
+PORTING.md:284: TODO(device)
+README.md:17: TODO(device)
+README.md:21: TODO(device)
+README.md:38: TODO(device)
+scripts\check-luming.py:25: TODO(device)
+scripts\check-luming.py:27: TODO(device)
+scripts\check-luming.py:66: TODO(device)
+scripts\check-luming.py:66: TODO(ipsw)
+scripts\check-luming.py:66: TODO(kernel)
+scripts\check-luming.py:66: TODO(uefi)
+scripts\check-luming.py:66: TODO(host)
+scripts\check-luming.py:254: TODO(ipsw)
+scripts\check-luming.py:296: TODO(device)
+scripts\check-luming.py:298: TODO(device)
+scripts\check-luming.py:301: TODO(device)
+scripts\check-luming.py:308: TODO(kernel)
+scripts\check-luming.py:349: TODO(kernel)
+scripts\check-luming.py:377: TODO(device)
+scripts\check-luming.py:379: TODO(device)
+scripts\check-luming.py:608: TODO(device)
+scripts\check-luming.py:609: TODO(device)
+scripts\check-luming.py:645: TODO(device)
+scripts\check-luming.py:647: TODO(device)
+scripts\check-luming.py:651: TODO(device)
+scripts\check-luming.py:657: TODO(device)
+scripts\check-luming.py:662: TODO(device)
+scripts\check-luming.py:666: TODO(device)
+scripts\check-luming.py:673: TODO(device)
+scripts\make-luming-adt.py:26: TODO(device)
+scripts\make-luming-adt.py:252: TODO(device)
+scripts\make-luming-adt.py:716: TODO(device)
+scripts\make-luming-adt.py:748: TODO(device)
+scripts\make-luming-adt.py:751: TODO(device)
+WARN  TODO inventory: 80 open marker(s) (51 in code/config, 38 of those TODO(device); the rest are documentation references)
+       18  board.toml
+        8  docs\STATUS.md
+        4  docs\VALIDATION.md
+        4  package\LumingKit\Kit.toml
+       14  PORTING.md
+        3  README.md
+       24  scripts\check-luming.py
+        5  scripts\make-luming-adt.py
+WARN  board.toml: [ipsw.sha256] member pins are TODO(ipsw): the extracted members are not pinned yet (whole-IPSW hash is not a member pin)
+WARN  board.toml: [kernel.prelink] slide is TODO(device)/UNVERIFIED (Darwin 22 prelink not demonstrated)
+WARN  board.toml: [kernel.prelink] early_security_init is TODO(device)/UNVERIFIED
+WARN  board.toml: [kernel.prelink] roots is TODO(kernel): no Darwin 22 prelink evidence
+WARN  board.toml: [payload] panic_screen is disabled for the pre-build set: the patch-xnu-entry-probe.py script it needs exists only in UniXNU-sheng (TODO(kernel): port it for Darwin 22 before enabling)
+WARN  board.toml: [payload.adt] owned_memory_size is a candidate window (TODO(device))
+WARN  board.toml: [payload.adt] root_match_volume_uuid is TODO(device): the SystemOS APFS UUID is not stored in the repository
+WARN  board.toml: [payload] trust_cache_sha256 and the Data seed are pending device inputs: the trust-cache owner bundle is built from the 20H392 IPSW and the Data seed is supplied with --data-ramdisk; neither is stored in this repository
+WARN  configs/luming_defconfig: XNU_BUILD_ARCHIVES is not in the docs/guide/build-kernel.md flag table (verify the kernel script consumes it)
+WARN  configs/luming_defconfig: XNU_CRYPTO_BOOTSTRAP is not in the docs/guide/build-kernel.md flag table (verify the kernel script consumes it)
+WARN  configs/luming_defconfig: XNU_EXTRA_LD_ARCHIVES is not in the docs/guide/build-kernel.md flag table (verify the kernel script consumes it)
+WARN  pre-build stage: any TODO(device) value must be measured before a boot attempt (see PORTING.md "device inputs"); the authoritative per-field list is the code/config marker set printed by --list-todos, not the documentation counts
+
+PREFLIGHT PASSED: 12 warning(s)

@@ -1,0 +1,21 @@
+# Extra sources of the luming device repository (UniXNU feeds.toml format,
+# documented in UniXNU docs/reference/configuration.md).
+#
+# The base repository already supplies xnu, libplatform, libdispatch,
+# AvailabilityVersions, edk2, libpthread and corecrypto-2023.  This file is where
+# luming-only drivers/kits would be pinned once they exist as separate repositories.
+#
+# PRE-BUILD STATE: no luming driver/kit repository exists yet, so there are no
+# entries.  When one is created, use this shape (kind is driver|kit|patch|package|
+# refer|script; `commit` pins it and `unixnu.lock` records the resolved commit):
+#
+# [[source]]
+# name = "NativeLumingUfs"
+# kind = "driver"
+# git = "https://github.com/<org>/UniXNU-luming-drivers"
+# ref = "main"
+# path = "drivers/NativeLumingUfs"
+# commit = "<40-hex commit>"
+#
+# Do not add a source whose path does not exist: `unixnu fetch` refuses a checkout
+# without the declared subdirectory (feeds.py:_attach).

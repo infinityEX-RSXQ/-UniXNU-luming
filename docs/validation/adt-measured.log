@@ -1,0 +1,14 @@
+﻿# ADT measured-constant validation (bundled Python 3.12.14, 2026-10-22T23:31:13.7127020+08:00)
+$ python UniXNU-luming/scripts/make-luming-adt.py --output prebuild/out/luming-measured.adt --dram-size 0x300000000 --packed-data-ramdisk --trust-cache
+WARNING: no --unique-chip-id; /chosen unique-chip-id is omitted (board.toml declares it required)
+platform addresses: MEASURED on the luming board 2026-10-22 (live DTB/iomem)
+luming ADT: D:\civitoip20\prebuild\out\luming-measured.adt (15440 bytes, 8 CPU(s), dram 0x300000000)
+exit=0
+
+$ python UniXNU-luming/scripts/make-luming-adt.py --check --output prebuild/out/luming-measured.adt --dram-size 0x300000000 --packed-data-ramdisk --trust-cache
+luming ADT check: PASS (15440 bytes, addresses measured on the luming board 2026-10-22)
+exit=0
+
+$ python UniXNU-luming/scripts/make-luming-adt.py --check --output prebuild/out/luming-measured.adt   (the bare form from the task description)
+luming ADT check: PASS (15440 bytes, addresses measured on the luming board 2026-10-22)
+exit=0

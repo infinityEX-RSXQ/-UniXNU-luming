@@ -1,0 +1,23 @@
+# UniXNU payload volume configuration of the luming package.
+#
+# The device package/ becomes kits/luming in the build tree (UniXNU
+# docs/porting/device-repository.md: "The device package/ becomes kits/<board.kit>").
+# This repository is pre-build only: the package holds the board kit skeleton and
+# the honest list of drivers/kexts that do not exist yet (see README.md).
+version = 1
+
+[boot]
+timeout = 3
+default = "luming-kit"
+
+[[entry]]
+id = "luming-kit"
+title = "luming kit (placeholder - no device driver built yet)"
+type = "action"
+action = "exit"
+
+[[entry]]
+id = "exit"
+title = "Return to firmware"
+type = "action"
+action = "exit"

@@ -1,0 +1,31 @@
+# Device kit skeleton for the Xiaomi Civi 5 Pro (luming).
+#
+# A kit directory's Kit.toml is documented in
+# UniXNU docs/porting/device-repository.md ("A kit directory has a Kit.toml").
+# Every [match] key is required; a kit that does not match is skipped and counted
+# in the UniXNU menu summary.
+#
+# PRE-BUILD STATE: no luming device driver, DT overlay or kext exists yet, so this
+# kit intentionally declares no injection entries.  The match below only ever
+# becomes true on the luming firmware once uefi-luming publishes a compatible
+# "xiaomi,luming" root; until a driver is added the kit loads nothing, which is the
+# honest behaviour (it must not pretend to inject missing drivers).
+schema = 1
+
+[kit]
+name = "luming"
+version = "0.0.0-prebuild"
+description = "Xiaomi Civi 5 Pro (SM8735) kit skeleton: no device drivers yet (pre-build phase)"
+
+[match]
+arch = "AARCH64"
+fdt_compatible = ["xiaomi,luming"]
+firmware_vendor = []          # TODO(uefi): Mu-Silicium vendor string of uefi-luming, once known
+requires_protocol = []        # TODO(driver): protocols the future drivers need from the firmware
+
+# No [[driver]], [[overlay]] or [[kext]] entries: the luming touch/display/UFS/GPU
+# drivers do not exist.  TODO(driver) list (see ../README.md):
+#   - NativeLumingUfs      UFS host controller values for SM8735 (TODO(device))
+#   - NativeLumingDisplay  panel + DSI/DPU programming (TODO(device))
+#   - NativeLumingTouch    touch controller identity and I2C/SPI addressing (TODO(device))
+#   - NativeAdreno825      GPU bring-up (not started)
