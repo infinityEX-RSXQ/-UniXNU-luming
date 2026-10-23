@@ -79,6 +79,20 @@ if component == 'NativeUfs':
     # later verified-block build but do not define NATIVE_VERIFIED_BLOCK here.
     command += ['-I', str(ROOT / 'kits/VerifiedRoot/include'), '-I', str(ROOT / 'drivers/NativeVirtioBlock'),
                 '-mgeneral-regs-only']
+    # NativeUfs.cpp defines timerTicks()/native_ufs_read_ticks only under
+    # NATIVE_VERIFIED_BLOCK, but the non-verified read path still uses them.
+    compat = out / 'bootstrap_ufs_compat.h'
+    compat.write_text(
+        '#pragma once\n'
+        '#include <stdint.h>\n'
+        'static inline uint64_t timerTicks(void) {\n'
+        '    uint64_t value;\n'
+        '    __asm__ volatile("isb\\n\\tmrs %0, cntpct_el0" : "=r"(value));\n'
+        '    return value;\n'
+        '}\n'
+        'static volatile uint64_t native_ufs_read_ticks = 0;\n',
+        encoding='utf-8')
+    command += ['-include', str(compat)]
 if component=='NativeOfflineGPU':
     command += ['-I',str(ROOT/'drivers/NativeVirtioConsole')]
 if component in ('NativeLegacyDisplay','NativeHidInput'):
