@@ -79,10 +79,8 @@ archives = [
   "build-corecrypto-14.py --namespace",
   "build-arm-driver.py ArmDTPlatform",
   "build-arm-driver.py ArmCpu",
-  "build-arm-driver.py NativeUfs",
   "build-arm-driver.py NativeAES",
   "build-native-aes-bindings.py",
-  "build-arm-driver.py NativeRamBlock",
   "build-libpthread-kernel.py",
   "build-mockfs-fixture.py",
 ]
@@ -137,38 +135,10 @@ kernelcache_sha256 = "2ec297bac95bcba01046fd0148e97e7e5885c05a6c18827f39f534ba37
 # "reference analytical selection/slide, not board configuration or emit". Do not treat
 # a successful prelink gate as proof; the native ABI/emit still has to pass.
 slide = "-0x1000000"
-roots = [
-  "com.apple.AppleFSCompression.AppleFSCompressionTypeZlib",
-  "com.apple.driver.AppleARMPlatform",
-  "com.apple.driver.AppleARMWatchdogTimer",
-  "com.apple.driver.AppleAudioClockLibs",
-  "com.apple.driver.AppleEffaceableStorage",
-  "com.apple.driver.AppleIISController",
-  "com.apple.driver.AppleM2ScalerCSCDriver",
-  "com.apple.driver.AppleMobileFileIntegrity",
-  "com.apple.driver.ApplePMGR",
-  "com.apple.driver.IODARTFamily",
-  "com.apple.filesystems.apfs",
-  "com.apple.iokit.CoreAnalyticsFamily",
-  "com.apple.iokit.IOAVFamily",
-  "com.apple.iokit.IOAudio2Family",
-  "com.apple.iokit.IOCECFamily",
-  "com.apple.iokit.IOCryptoAcceleratorFamily",
-  "com.apple.iokit.IOGPUFamily",
-  "com.apple.iokit.IOHDCPFamily",
-  "com.apple.iokit.IOHIDFamily",
-  "com.apple.iokit.IOMobileGraphicsFamily",
-  "com.apple.iokit.IOReportFamily",
-  "com.apple.iokit.IOSlowAdaptiveClockingFamily",
-  "com.apple.iokit.IOStorageFamily",
-  "com.apple.iokit.IOSurface",
-  "com.apple.kec.Libm",
-  "com.apple.kec.corecrypto",
-  "com.apple.kext.AppleMatch",
-  "com.apple.kext.CoreTrust",
-  "com.apple.security.AppleImage4",
-  "com.apple.security.sandbox",
-]
+# BOOTSTRAP CANDIDATE: empty roots until the original-kernelcache IOPCIFamily export
+# (IOPCIMessageFromMach) and storage bindings are audited. This only lets prelink emit
+# a kernel artifact; it is not a bootable userland root set.
+roots = []
 
 #
 # TODO(device) / TODO(kernel) - fill only with values derived from the luming target
