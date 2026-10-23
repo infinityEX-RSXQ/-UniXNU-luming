@@ -49,7 +49,8 @@ CONFIG_XNU_TRUST_CACHE_RUNTIME=y
 # what the UniXNU-sheng iPad port uses.  TODO(kernel)/UNVERIFIED: choose between the
 # legacy and mobile providers only after the Darwin 22 display audit; the luming
 # panel driver itself does not exist yet.
-CONFIG_XNU_NATIVE_LEGACY_DISPLAY=y
+# BOOTSTRAP: disabled until scripts/audit-mobile-graphics-legacy.py has a reference candidate
+CONFIG_XNU_NATIVE_LEGACY_DISPLAY=n
 CONFIG_XNU_NATIVE_MOBILE_DISPLAY=n
 
 # --- kernel facilities -------------------------------------------------------
@@ -106,3 +107,4 @@ CONFIG_XNU_CRYPTO_BOOTSTRAP="prelinked"
 
 # Prebuilt verified archives are image-specific and absent for luming.
 CONFIG_XNU_EXTRA_LD_ARCHIVES=""
+
