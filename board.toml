@@ -140,8 +140,51 @@ slide = "-0x1000000"
 # a kernel artifact; it is not a bootable userland root set.
 # BOOTSTRAP CANDIDATE: one independent kext so NativePrelink can emit; the full
 # luming root set needs the original-kernelcache IOPCIFamily/storage binding audit.
+# Closed from the original 20H392 kernelcache by
+# backup/analysis/resolve-prelink-roots.py: every selected kext's direct
+# PC-relative references are owned by a selected component.
 roots = [
+  "com.apple.AppleFSCompression.AppleFSCompressionTypeZlib",
+  "com.apple.driver.AppleARMPlatform",
+  "com.apple.driver.AppleARMWatchdogTimer",
+  "com.apple.driver.AppleAudioClockLibs",
+  "com.apple.driver.AppleEffaceableStorage",
+  "com.apple.driver.AppleIISController",
+  "com.apple.driver.AppleM2ScalerCSCDriver",
+  "com.apple.driver.AppleMobileFileIntegrity",
+  "com.apple.driver.ApplePMGR",
+  "com.apple.driver.IODARTFamily",
+  "com.apple.filesystems.apfs",
+  "com.apple.iokit.CoreAnalyticsFamily",
+  "com.apple.iokit.IOAVFamily",
+  "com.apple.iokit.IOAudio2Family",
+  "com.apple.iokit.IOCECFamily",
+  "com.apple.iokit.IOCryptoAcceleratorFamily",
+  "com.apple.iokit.IOGPUFamily",
+  "com.apple.iokit.IOHDCPFamily",
+  "com.apple.iokit.IOHIDFamily",
+  "com.apple.iokit.IOMobileGraphicsFamily",
+  "com.apple.iokit.IOReportFamily",
+  "com.apple.iokit.IOSlowAdaptiveClockingFamily",
+  "com.apple.iokit.IOStorageFamily",
+  "com.apple.iokit.IOSurface",
   "com.apple.kec.Libm",
+  "com.apple.kec.corecrypto",
+  "com.apple.kext.AppleMatch",
+  "com.apple.kext.CoreTrust",
+  "com.apple.security.AppleImage4",
+  "com.apple.security.sandbox",
+  "com.apple.iokit.IO80211Family",
+  "com.apple.driver.AppleSEPKeyStore",
+  "com.apple.driver.RTBuddy",
+  "com.apple.driver.AppleMobileDispH10P",
+  "com.apple.driver.AppleEmbeddedMikeyBus",
+  "com.apple.driver.AppleMikeyBusAudio",
+  "com.apple.driver.AppleSEPManager",
+  "com.apple.plugin.IOgPTPPlugin",
+  "com.apple.driver.AppleT8015CLPCv3",
+  "com.apple.iokit.IOMikeyBusFamily",
+  "com.apple.driver.AppleSynopsysOTGDevice",
 ]
 
 #
