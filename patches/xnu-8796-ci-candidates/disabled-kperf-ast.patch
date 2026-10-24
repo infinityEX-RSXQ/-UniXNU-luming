@@ -1,0 +1,25 @@
+--- a/osfmk/kern/ast.c
++++ b/osfmk/kern/ast.c
+@@ -71,7 +71,9 @@
+ #include <kern/waitq.h>
+ #include <kern/ledger.h>
+ #include <kern/machine.h>
++#if KPERF
+ #include <kperf/kperf_kpc.h>
++#endif
+ #include <mach/policy.h>
+ #include <security/mac_mach_internal.h> // for MACF AST hook
+ #include <stdatomic.h>
+@@ -254,10 +256,12 @@
+ 		ledger_ast(thread);
+ 	}
+ 
++#if KPERF
+ 	if (reasons & AST_KPERF) {
+ 		thread_ast_clear(thread, AST_KPERF);
+ 		kperf_kpc_thread_ast(thread);
+ 	}
++#endif
+ 
+ 	if (reasons & AST_RESET_PCS) {
+ 		thread_ast_clear(thread, AST_RESET_PCS);
