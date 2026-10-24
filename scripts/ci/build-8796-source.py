@@ -211,7 +211,10 @@ def main():
             dependencies = ' '.join(str(archive) for archive in archives)
             relink = captured + [f'LD_KERNEL_ARCHIVES={force}',
                                  f'XNU_EXTERNAL_KERNEL_ARCHIVES={dependencies}']
-            run(relink, cwd=work, env=env)
+            relink_env = dict(env)
+            relink_env['KERNEL_SDKROOT'] = str(work / '.cache/fakeroot')
+            relink_env['CPATH'] = str(work / '.cache/fakeroot/usr/local/include') + os.pathsep + env.get('CPATH', '')
+            run(relink, cwd=work, env=relink_env)
             magic, cpu, subtype, filetype = struct.unpack('<IIII', kernel.read_bytes()[:16])
             if (magic, cpu, subtype, filetype) != (0xfeedfacf, 0x100000c, 0, 2):
                 raise ValueError('Relinked kernel is not an ARM64 MH_EXECUTE')
