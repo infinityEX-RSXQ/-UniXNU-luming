@@ -208,6 +208,11 @@ def main():
             if noctf.exists():
                 noctf.unlink()
             force = ' '.join(f'-Wl,-force_load,{archive}' for archive in archives)
+            firehose_dir = work / '.cache/fakeroot/usr/local/lib/kernel'
+            firehose = firehose_dir / 'libfirehose_kernel.a'
+            if firehose.is_file():
+                force = f'-L{firehose_dir} -lfirehose_kernel ' + force
+                archives.insert(0, firehose)
             dependencies = ' '.join(str(archive) for archive in archives)
             relink = captured + [f'LD_KERNEL_ARCHIVES={force}',
                                  f'XNU_EXTERNAL_KERNEL_ARCHIVES={dependencies}']
