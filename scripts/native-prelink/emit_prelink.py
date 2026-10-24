@@ -205,6 +205,10 @@ def instruction_inventory(original_data, parent, modules, all_modules, native_ex
             'register_dataflow_qualified': False}
 
 def emit(native_data, original_data, roots, slide, early_security_init=None):
+    _debug_native = macho(native_data)
+    _debug_names = [name for names in exports(native_data, _debug_native).values()
+                    for name in names if 'IOPCI' in name]
+    print('DEBUG native IOPCI exports:', _debug_names, flush=True)
     report = plan(native_data, original_data, roots, slide)
     native, original = macho(native_data), macho(original_data)
     marker = [address for address, names in exports(native_data, native).items()
@@ -219,8 +223,6 @@ def emit(native_data, original_data, roots, slide, early_security_init=None):
     at = backed_offset(parent, old_info['va'], old_info['filesize'], len(original_data))
     metadata = unserialize_xml(original_data[at:at + old_info['filesize']])
     entries = {e['CFBundleIdentifier']: e for e in metadata['_PrelinkInfoDictionary']}
-    _native_iopci = [name for names in exports(native_data, native).values() for name in names if 'IOPCI' in name]
-    print('DEBUG native IOPCI exports:', _native_iopci)
     all_modules = {}
     for identifier, entry in entries.items():
         if entry.get('OSKernelResource') is True:
