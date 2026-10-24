@@ -21,6 +21,8 @@ def _unique_kernel_binding_with_aliases(address, original_exports, native_by_nam
     except ValueError:
         names = original_exports.get(address, [])
         print('DEBUG binding names:', [repr(name) for name in names], flush=True)
+        print('DEBUG native_by_name type/len:', type(native_by_name).__name__, len(native_by_name), flush=True)
+        print('DEBUG native IOPCI keys:', [repr(key) for key in native_by_name if 'IOPCI' in key], flush=True)
         for name in names:
             print('DEBUG key lookup:', repr(name), name in native_by_name,
                   native_by_name.get(name), flush=True)
