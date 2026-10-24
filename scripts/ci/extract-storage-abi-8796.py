@@ -87,18 +87,29 @@ for i in range(symcount):
     symbols.append(dict(name=name, value=value, kind=nkind))
 vtable = next(s["value"] for s in symbols if s["name"] == "__ZTV20IOBlockStorageDevice")
 end = min(s["value"] for s in symbols if not s["kind"] & 0xE0 and s["kind"] & 0xE == 0xE and s["value"] > vtable)
-sys.path.insert(0, str(WORK / "kits/NativePrelink"))
-import native_prelink as np  # noqa: E402
-image = np.macho(obj_bytes)
+# Parse the Mach-O section that holds the vtable directly: the Darwin22 work
+# tree has no kits/NativePrelink checkout, so do not import native_prelink.
+sections = []
+offset = 32
+for _ in range(count):
+    cmd, length = struct.unpack_from("<II", obj_bytes, offset)
+    if cmd == 0x19:
+        nsects = struct.unpack_from("<I", obj_bytes, offset + 64)[0]
+        section_at = offset + 72
+        for _ in range(nsects):
+            addr, size = struct.unpack_from("<QQ", obj_bytes, section_at + 32)
+            reloff, nreloc = struct.unpack_from("<II", obj_bytes, section_at + 56)
+            sections.append((addr, size, reloff, nreloc))
+            section_at += 80
+    offset += length
 relocations = {}
-for segment in image["segments"]:
-    for section in segment["sections"]:
-        if section["va"] <= vtable < section["va"] + section["size"]:
-            ro, rc = struct.unpack_from("<II", obj_bytes, section["command_offset"] + 56)
-            for i in range(rc):
-                address, word = struct.unpack_from("<II", obj_bytes, ro + i * 8)
-                if word >> 27 & 1 and word >> 28 == 0 and word >> 25 & 3 == 3:
-                    relocations[section["va"] + address] = symbols[word & 0xFFFFFF]["name"]
+for addr, size, reloff, nreloc in sections:
+    if addr <= vtable < addr + size:
+        for i in range(nreloc):
+            address, word = struct.unpack_from("<II", obj_bytes, reloff + i * 8)
+            if word >> 27 & 1 and word >> 28 == 0 and word >> 25 & 3 == 3:
+                relocations[addr + address] = symbols[word & 0xFFFFFF]["name"]
+        break
 methods = []
 for at in range(vtable + 16, end, 8):
     if at not in relocations:
