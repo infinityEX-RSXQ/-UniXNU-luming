@@ -1,0 +1,32 @@
+--- a/osfmk/arm64/pcb.c
++++ b/osfmk/arm64/pcb.c
+@@ -41,7 +41,9 @@
+ #include <kern/mach_param.h>
+ #include <kern/spl.h>
+ #include <kern/machine.h>
++#if KPC
+ #include <kern/kpc.h>
++#endif
+ 
+ #if MONOTONIC
+ #include <kern/monotonic.h>
+@@ -180,7 +182,9 @@
+ 		panic("machine_switch_context");
+ 	}
+ 
++#if KPC
+ 	kpc_off_cpu(old);
++#endif
+ 
+ 	machine_switch_pmap_and_extended_context(old, new);
+ 
+@@ -516,7 +520,9 @@
+ 	}
+ #endif
+ 
++#if KPC
+ 	kpc_off_cpu(old);
++#endif
+ 
+ 	stack = machine_stack_detach(old);
+ #if CONFIG_STKSZ
