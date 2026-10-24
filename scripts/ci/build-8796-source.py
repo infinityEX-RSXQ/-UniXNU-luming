@@ -106,6 +106,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base', required=True, type=Path)
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--with-ufs', action='store_true')
     args = parser.parse_args()
     base = args.base.resolve()
     patches, script, firehose_script = inputs(base)
@@ -140,6 +141,14 @@ def main():
     report = work / 'reports/build.json'
     report.write_text(json.dumps(summary, indent=2) + '\n')
     shutil.copytree(base / 'scripts', work / 'scripts')
+    for name in ('drivers', 'kits'):
+        if (base / name).is_dir():
+            shutil.copytree(base / name, work / name)
+    if (DEVICE / 'include').is_dir():
+        shutil.copytree(DEVICE / 'include', work / 'include')
+    patched_builder = DEVICE / 'scripts' / 'build-arm-driver.py'
+    if patched_builder.is_file():
+        shutil.copyfile(patched_builder, work / 'scripts' / 'build-arm-driver.py')
     for path in patches:
         folder = 'kits/NativePrelink/patches' if path.name.startswith('xnu-10063.') else 'patches/xnu'
         target = work / folder / path.name
@@ -172,6 +181,33 @@ def main():
                        kernel_path=str(kernel.relative_to(work)))
         run(['file', kernel])
         run(['xcrun', 'otool', '-l', kernel])
+        if args.with_ufs:
+            for component in ('ArmDTPlatform', 'ArmCpu', 'NativeUfs'):
+                run([sys.executable, '-B', work / 'scripts/build-arm-driver.py', component],
+                    cwd=work, env=env)
+            run([sys.executable, '-B', DEVICE / 'scripts/build-native-ufs-bindings.py'],
+                cwd=work, env=env)
+            archives = [work / 'build/armdt-platform/libArmDTPlatform.a',
+                        work / 'build/armcpu/libArmCpu.a',
+                        work / 'build/native-ufs/libNativeUfs.a']
+            for archive in archives:
+                if not archive.is_file():
+                    raise ValueError(f'missing archive {archive}')
+            captured = json.loads((work / 'reports/kernel-make-command.json').read_text())
+            kernel.unlink()
+            noctf = kernel.with_suffix('.unstripped.noctf')
+            if noctf.exists():
+                noctf.unlink()
+            force = ' '.join(f'-Wl,-force_load,{archive}' for archive in archives)
+            dependencies = ' '.join(str(archive) for archive in archives)
+            relink = captured + [f'LD_KERNEL_ARCHIVES={force}',
+                                 f'XNU_EXTERNAL_KERNEL_ARCHIVES={dependencies}']
+            run(relink, cwd=work, env=env)
+            magic, cpu, subtype, filetype = struct.unpack('<IIII', kernel.read_bytes()[:16])
+            if (magic, cpu, subtype, filetype) != (0xfeedfacf, 0x100000c, 0, 2):
+                raise ValueError('Relinked kernel is not an ARM64 MH_EXECUTE')
+            summary['ufs_archives'] = [str(archive.relative_to(work)) for archive in archives]
+            summary['kernel_sha256'] = sha(kernel)
         run([sys.executable, '-B', DEVICE / 'scripts/ci/audit-driver-archives.py',
              '--work', work, '--base', base])
         summary['driver_archive_audit'] = 'passed; compile and symbol closure only'
