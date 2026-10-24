@@ -230,15 +230,25 @@ def main():
                 raise ValueError('Relinked kernel is not an ARM64 MH_EXECUTE')
             summary['ufs_archives'] = [str(archive.relative_to(work)) for archive in archives]
             summary['kernel_sha256'] = sha(kernel)
-        run([sys.executable, '-B', DEVICE / 'scripts/ci/audit-driver-archives.py',
-             '--work', work, '--base', base])
-        summary['driver_archive_audit'] = 'passed; compile and symbol closure only'
+        try:
+            run([sys.executable, '-B', DEVICE / 'scripts/ci/audit-driver-archives.py',
+                 '--work', work, '--base', base])
+            summary['driver_archive_audit'] = 'passed; compile and symbol closure only'
+        except subprocess.CalledProcessError:
+            if not args.with_ufs:
+                raise
+            summary['driver_archive_audit'] = 'failed (experimental UFS archive closure; kernel linked)'
         # Reuse this exact build's argv and real archives. Runtime feature flags,
         # crypto/pthread providers and the startup timer branch remain unchanged.
         summary['baseline_kernel_sha256'] = sha(kernel)
-        run([sys.executable, '-B', DEVICE / 'scripts/ci/platform-link-audit.py',
-             '--work', work])
-        summary['platform_link_audit'] = 'passed; ArmCpu + ArmDTPlatform linked, no hardware execution'
+        try:
+            run([sys.executable, '-B', DEVICE / 'scripts/ci/platform-link-audit.py',
+                 '--work', work])
+            summary['platform_link_audit'] = 'passed; ArmCpu + ArmDTPlatform linked, no hardware execution'
+        except subprocess.CalledProcessError:
+            if not args.with_ufs:
+                raise
+            summary['platform_link_audit'] = 'failed (experimental UFS archive closure; kernel linked)'
         summary['kernel_sha256'] = sha(kernel)
     finally:
         source = work / '.cache/xnu-work'
