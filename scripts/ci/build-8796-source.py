@@ -182,6 +182,12 @@ def main():
         run(['file', kernel])
         run(['xcrun', 'otool', '-l', kernel])
         if args.with_ufs:
+            storage_headers = work / 'build/storage-abi/include/IOKit/storage'
+            device_headers = DEVICE / 'include/IOStorageFamily'
+            if device_headers.is_dir():
+                storage_headers.mkdir(parents=True, exist_ok=True)
+                for header in device_headers.glob('*.h'):
+                    shutil.copyfile(header, storage_headers / header.name)
             for component in ('ArmDTPlatform', 'ArmCpu', 'NativeUfs'):
                 run([sys.executable, '-B', work / 'scripts/build-arm-driver.py', component],
                     cwd=work, env=env)
