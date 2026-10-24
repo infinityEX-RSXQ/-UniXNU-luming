@@ -182,6 +182,11 @@ def main():
         run(['file', kernel])
         run(['xcrun', 'otool', '-l', kernel])
         if args.with_ufs:
+            ufs_source = work / 'drivers/NativeUfs/NativeUfs.cpp'
+            if ufs_source.is_file():
+                text = ufs_source.read_text(encoding='utf-8')
+                text = text.replace('"qcom,sm8550-ufshc"', '"qcom,ufshc"')
+                ufs_source.write_text(text, encoding='utf-8')
             storage_headers = work / 'build/storage-abi/include/IOKit/storage'
             device_headers = DEVICE / 'include/IOStorageFamily'
             if device_headers.is_dir():
