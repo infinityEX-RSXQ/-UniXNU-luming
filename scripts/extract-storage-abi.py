@@ -53,7 +53,7 @@ while index < len(arguments):
         command.append(value)
     index += 1
 command += ["-I", str(out / "include"), "-I", str(TREE / ".cache/xnu-work/osfmk"),
-            "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter", "-Wno-deprecated-declarations",
+            "-Wall", "-Wextra", "-Werror", "-Wno-unknown-warning-option", "-Wno-unused-parameter", "-Wno-deprecated-declarations",
             "-Wno-c99-designator", "-Wno-reorder-init-list", "-Wno-unnecessary-virtual-specifier",
             "-Wno-deprecated-enum-enum-conversion"]
 (out / "compile-command.json").write_text(json.dumps(command, indent=2) + "\n")
