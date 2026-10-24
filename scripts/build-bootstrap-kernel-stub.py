@@ -23,10 +23,12 @@ source = out / "bootstrap_kernel_stubs.s"
 source.write_text(
     ".text\n"
     ".p2align 2\n"
-    ".globl _IOPCIMessageFromMach\n"
-    ".globl IOPCIMessageFromMach\n"
-    "_IOPCIMessageFromMach:\n"
-    "IOPCIMessageFromMach:\n"
+    ".globl _IORPCMessageFromMach\n"
+    ".globl IORPCMessageFromMach\n"
+    ".globl __IORPCMessageFromMach\n"
+    "_IORPCMessageFromMach:\n"
+    "IORPCMessageFromMach:\n"
+    "__IORPCMessageFromMach:\n"
     "\tret\n",
     encoding="utf-8",
 )
