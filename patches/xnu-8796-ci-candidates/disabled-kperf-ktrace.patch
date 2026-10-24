@@ -1,0 +1,58 @@
+--- a/bsd/kern/kern_ktrace.c
++++ b/bsd/kern/kern_ktrace.c
+@@ -66,7 +66,9 @@
+ #include <kern/assert.h>
+ 
+ #include <sys/kdebug.h>
++#if KPERF
+ #include <kperf/kperf.h>
++#endif
+ 
+ #include <kern/host.h>
+ 
+@@ -207,9 +209,11 @@
+ 		ktrace_active_mask &= ~reset_mask;
+ 	}
+ 
++#if KPERF
+ 	if (reset_mask & KTRACE_KPERF) {
+ 		kperf_reset();
+ 	}
++#endif
+ 	if (reset_mask & KTRACE_KDEBUG) {
+ 		kdebug_reset();
+ 	}
+@@ -366,7 +370,9 @@
+ {
+ 	if (ktrace_state == state_to_match) {
+ 		kernel_debug_disable();
++#if KPERF
+ 		kperf_disable_sampling();
++#endif
+ 	}
+ }
+ 
+@@ -390,9 +396,11 @@
+ 	}
+ 
+ 	if (ktrace_state != KTRACE_STATE_OFF) {
++#if KPERF
+ 		if (ktrace_active_mask & config_mask & KTRACE_KPERF) {
+ 			kperf_reset();
+ 		}
++#endif
+ 		if (ktrace_active_mask & config_mask & KTRACE_KDEBUG) {
+ 			kdebug_reset();
+ 		}
+@@ -502,9 +510,11 @@
+ 			ktrace_state = KTRACE_STATE_BG;
+ 		} else {
+ 			if (ktrace_state == KTRACE_STATE_BG) {
++#if KPERF
+ 				if (ktrace_active_mask & KTRACE_KPERF) {
+ 					kperf_reset();
+ 				}
++#endif
+ 				if (ktrace_active_mask & KTRACE_KDEBUG) {
+ 					kdebug_reset();
+ 				}
