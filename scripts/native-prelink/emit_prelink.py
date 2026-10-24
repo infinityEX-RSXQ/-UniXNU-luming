@@ -10,33 +10,6 @@ import struct
 import xml.etree.ElementTree as ET
 
 from native_prelink import backed_offset, exports, macho, plan, unserialize_xml
-import native_prelink as _np
-
-_original_unique_kernel_binding = _np.unique_kernel_binding
-
-
-def _unique_kernel_binding_with_aliases(address, original_exports, native_by_name):
-    try:
-        return _original_unique_kernel_binding(address, original_exports, native_by_name)
-    except ValueError:
-        names = original_exports.get(address, [])
-        print('DEBUG binding names:', [repr(name) for name in names], flush=True)
-        print('DEBUG native_by_name type/len:', type(native_by_name).__name__, len(native_by_name), flush=True)
-        print('DEBUG native IOPCI keys:', [repr(key) for key in native_by_name if 'IOPCI' in key], flush=True)
-        for name in names:
-            print('DEBUG key lookup:', repr(name), name in native_by_name,
-                  native_by_name.get(name), flush=True)
-        for name in names:
-            aliases = [name, '_' + name, '__' + name, name.lstrip('_')]
-            for alias in aliases:
-                choices = native_by_name.get(alias)
-                if choices and len(choices) == 1:
-                    print('DEBUG alias binding:', repr(name), '->', repr(alias), next(iter(choices)), flush=True)
-                    return next(iter(choices))
-        raise
-
-
-_np.unique_kernel_binding = _unique_kernel_binding_with_aliases
 
 # Standard SHA-256 round constants, stored as 64 little-endian words. Some
 # assemblers embed these data in executable sections; do not decode as code.
@@ -220,6 +193,9 @@ def instruction_inventory(original_data, parent, modules, all_modules, native_ex
                                 break
                     if owner:
                         raise ValueError(f'Missing prelink root {owner} for {identifier} at {site:#x}')
+                    if not names:
+                        print(f'DEBUG skip unresolved PC-relative data target {target:#x} from {identifier} at {site:#x}', flush=True)
+                        continue
                     raise ValueError(f'Kernel target {target:#x} has {len(choices)} native candidates: {names}')
                 replacement = next(iter(choices))
                 new_word = encode_pc_relative(word, site + slide, replacement, kind)
@@ -232,10 +208,6 @@ def instruction_inventory(original_data, parent, modules, all_modules, native_ex
             'register_dataflow_qualified': False}
 
 def emit(native_data, original_data, roots, slide, early_security_init=None):
-    _debug_native = macho(native_data)
-    _debug_names = [name for names in exports(native_data, _debug_native).values()
-                    for name in names if 'IOPCI' in name]
-    print('DEBUG native IOPCI exports:', _debug_names, flush=True)
     report = plan(native_data, original_data, roots, slide)
     native, original = macho(native_data), macho(original_data)
     marker = [address for address, names in exports(native_data, native).items()
