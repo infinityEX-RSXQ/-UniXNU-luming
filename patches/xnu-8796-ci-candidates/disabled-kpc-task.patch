@@ -1,0 +1,12 @@
+--- a/osfmk/kern/task.c
++++ b/osfmk/kern/task.c
+@@ -1510,7 +1510,9 @@
+ 
+ 	new_task->affinity_space = NULL;
+ 
++#if KPC
+ 	new_task->t_kpc = 0;
++#endif
+ 
+ 	new_task->pidsuspended = FALSE;
+ 	new_task->frozen = FALSE;
