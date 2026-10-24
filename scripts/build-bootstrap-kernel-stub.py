@@ -14,7 +14,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 out = ROOT / "build" / "native-aes"
 out.mkdir(parents=True, exist_ok=True)
-archive = out / "libNativeAES.a"
+archives = [
+    ROOT / "build" / "native-aes" / "libNativeAES.a",
+    ROOT / "build" / "armdt-platform" / "libArmDTPlatform.a",
+    ROOT / "build" / "armcpu" / "libArmCpu.a",
+]
 
 source = out / "bootstrap_kernel_stubs.s"
 source.write_text(
@@ -30,7 +34,9 @@ object_path = out / "bootstrap_kernel_stubs.o"
 subprocess.run(["xcrun", "clang", "-target", "arm64-apple-ios17.0",
                 "-c", str(source), "-o", str(object_path)], check=True)
 
-if not archive.is_file():
-    raise SystemExit(f"missing {archive}; run build-native-aes-bindings.py first")
-subprocess.run(["xcrun", "ar", "rcs", archive, object_path], check=True)
-print(f"PASS: appended bootstrap IOPCIMessageFromMach stub to {archive}")
+for archive in archives:
+    if not archive.is_file():
+        print(f"skip missing {archive}")
+        continue
+    subprocess.run(["xcrun", "ar", "rcs", archive, object_path], check=True)
+    print(f"PASS: appended bootstrap IOPCIMessageFromMach stub to {archive}")
