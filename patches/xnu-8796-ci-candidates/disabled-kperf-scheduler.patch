@@ -1,0 +1,31 @@
+--- a/osfmk/kern/sched_prim.c
++++ b/osfmk/kern/sched_prim.c
+@@ -120,8 +120,12 @@
+ #include <mach/host_info.h>
+ 
+ #include <sys/kdebug.h>
++#if KPERF
+ #include <kperf/kperf.h>
++#endif
++#if KPC
+ #include <kern/kpc.h>
++#endif
+ #include <san/kasan.h>
+ #include <kern/pms.h>
+ #include <kern/host.h>
+@@ -3746,6 +3750,7 @@
+ 
+ 		running_timer_setup(processor, RUNNING_TIMER_QUANTUM, self,
+ 		    processor->quantum_end, processor->last_dispatch);
++#if KPERF
+ 		if (was_idle) {
+ 			/*
+ 			 * kperf's running timer is active whenever the idle thread for a
+@@ -3753,6 +3758,7 @@
+ 			 */
+ 			kperf_running_setup(processor, processor->last_dispatch);
+ 		}
++#endif
+ 		running_timers_activate(processor);
+ 		processor->first_timeslice = TRUE;
+ 	} else {
