@@ -109,5 +109,5 @@ CONFIG_XNU_CRYPTO_BOOTSTRAP="prelinked"
 # CONFIG_XNU_OWNER_DATA_VOLUME_UUID="00000000-0000-0000-0000-000000000000"
 
 # Prebuilt verified archives are image-specific and absent for luming.
-CONFIG_XNU_EXTRA_LD_ARCHIVES=""
+CONFIG_XNU_EXTRA_LD_ARCHIVES="-Wl,-u,_IOPCIMessageFromMach,-u,IOPCIMessageFromMach"
 
