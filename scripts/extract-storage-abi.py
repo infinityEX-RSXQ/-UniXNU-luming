@@ -16,8 +16,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path.cwd()
-source = ROOT / "refer" / "IOStorageFamily"
-record_path = ROOT / "build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/IOPlatformExpert.cpo.json"
+TREE = next((ROOT / "out").glob("*/tree"))
+source = TREE / "refer" / "IOStorageFamily"
+record_path = TREE / "build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/IOPlatformExpert.cpo.json"
 if not source.is_dir() or not (source / "IOBlockStorageDevice.cpp").is_file():
     raise SystemExit(f"missing IOStorageFamily source: {source}")
 if not record_path.is_file():
@@ -51,7 +52,7 @@ while index < len(arguments):
     elif not value.startswith("-W") and value not in ("-MD", "-MP"):
         command.append(value)
     index += 1
-command += ["-I", str(out / "include"), "-I", str(ROOT / ".cache/xnu-work/osfmk"),
+command += ["-I", str(out / "include"), "-I", str(TREE / ".cache/xnu-work/osfmk"),
             "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter", "-Wno-deprecated-declarations",
             "-Wno-c99-designator", "-Wno-reorder-init-list", "-Wno-unnecessary-virtual-specifier",
             "-Wno-deprecated-enum-enum-conversion"]
@@ -86,7 +87,7 @@ vtable = next(s["value"] for s in symbols if s["name"] == "__ZTV20IOBlockStorage
 end = min(s["value"] for s in symbols if not s["kind"] & 0xE0 and s["kind"] & 0xE == 0xE and s["value"] > vtable)
 relocations = {}
 # Reuse the public audit relocation reader.
-sys.path.insert(0, str(ROOT / "kits/NativePrelink"))
+sys.path.insert(0, str(TREE / "kits/NativePrelink"))
 import native_prelink as np  # noqa: E402
 image = np.macho(obj)
 for segment in image["segments"]:
