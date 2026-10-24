@@ -188,6 +188,9 @@ def main():
                 storage_headers.mkdir(parents=True, exist_ok=True)
                 for header in device_headers.glob('*.h'):
                     shutil.copyfile(header, storage_headers / header.name)
+                sdk = Path(subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip())
+                shutil.copyfile(sdk / 'usr/include/TargetConditionals.h',
+                                work / 'build/storage-abi/include/TargetConditionals.h')
             for component in ('ArmDTPlatform', 'ArmCpu', 'NativeUfs'):
                 run([sys.executable, '-B', work / 'scripts/build-arm-driver.py', component],
                     cwd=work, env=env)
