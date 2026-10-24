@@ -117,7 +117,7 @@ for _ in range(count):
     if cmd == 0x32:
         deployment = struct.unpack_from('<II', data, offset + 8)
     offset += length
-if deployment != (2, 0x110000):
+if deployment not in ((2, 0x110000), (2, 0x100000)):
     raise SystemExit(f'Unexpected platform deployment {deployment}')
 archive = out / ('lib' + component + '.a')
 archive.unlink(missing_ok=True)
