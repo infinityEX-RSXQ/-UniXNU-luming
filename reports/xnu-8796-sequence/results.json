@@ -1,0 +1,1738 @@
+{
+  "timestamp": "2026-10-22T09:08:56.411808+08:00",
+  "mode": "Strict in-memory sequence; final collapsed diff checked by read-only Git; no on-disk application/build",
+  "source_head": "1b191cb58250d0705d8a51287127505aa4bc0789",
+  "base_head": "75bc13dd34dc4e403826793739e316a264ce00dd",
+  "base_status": {
+    "command": [
+      "C:/Program Files/Git/cmd/git.exe",
+      "-c",
+      "safe.directory=D:/Code/PortingiOS/common/sources/UniXNU",
+      "--no-optional-locks",
+      "-C",
+      "D:\\Code\\PortingiOS\\common\\sources\\UniXNU",
+      "status",
+      "--porcelain",
+      "--untracked-files=no"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "comparison": [
+    {
+      "patch": "apple-only-cpu-tunables.patch",
+      "upstream_sha256": "91e431249a4d756bfca8b1800b4b283340c86d1899ec8196a2fe873e8d3c251e",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "osfmk/arm64/start.s: hunk 1 at 33 has no exact match: '#include <pexpert/arm64/board_config.h>\\n#include <mach_assert.h>\\n#include <machine/asm.h>\\n#include <arm64/tunables/tunables.s>\\n#include <arm64/exception_asm.h>\\n\\n#if __ARM_KERNEL_PROTECT__\\n'"
+    },
+    {
+      "patch": "architectural-timer-entry.patch",
+      "upstream_sha256": "809b0c951545d889a2a37c730189283e7e890340894bab6d937c914dbd20b8e5",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "armvirt-platform-personality.patch",
+      "upstream_sha256": "00e7054c9ff2ae82b66f27bfbefd7620e9000503ea5b38b80aa90aab1e4b7225",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "cxx-flag-dependencies.patch",
+      "upstream_sha256": "a435e8797ed24a8338db53d0eaac49c163f90170c1fb7946d0c5cdee9d7d4b52",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "disabled-deferred-reclaim.patch",
+      "upstream_sha256": "817a0b017aebb21f773aafe2b92a81be076abc66e29275d57220635339a407e1",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "external-archive-dependencies.patch",
+      "upstream_sha256": "0a571de8361845266d7d419b0b3d5ebadbef986840c7e06eb981c0960d7fe374",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "makedefs/MakeInc.kernel: hunk 1 at 187 has no exact match: '\\t$(_v)$(LN) $(call function_convert_build_config_to_objdir,$(CURRENT_BUILD_CONFIG))/lib$(KERNEL_FILE_NAME).a $(OBJROOT)/lib$(KERNEL_FILE_NAME).a\\nendif\\n\\n$(TARGET)/$(KERNEL_FILE_NAME).unstripped.noctf: $(addprefix $(TARGET'"
+    },
+    {
+      "patch": "kernel-sdk-root.patch",
+      "upstream_sha256": "2bcf10f4bf171afbc358cb64e9bc742563dd21f5eadf0e7a17936e87fa8ba43d",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "local-availability.patch",
+      "upstream_sha256": "a051857d524f8836068fd2f1182ebe9e9d9ccf28b9560fb27ad634b0cb93270e",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "mockfs-intermediate-lookup.patch",
+      "upstream_sha256": "51a5b76873c2a39b777bd4f1f5e78730ce72e93d548de6fbe4655f107731fa00",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "mockfs-memory-device-width.patch",
+      "upstream_sha256": "506f4ba36e30a700f0d27370d07abbde6e2c689d13fbad3400a6b940569ae30a",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "mockfs-statfs.patch",
+      "upstream_sha256": "58c9a51909b12dca9cd1ac2fdb94be748b43be1c979383b9504a0304fb16a809",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "mockfs-test-file.patch",
+      "upstream_sha256": "4a1ef86e0bdca7b633f59885961be1939574f8ba9814d1d75ebbfd0a7a8bd919",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "mockfs-typed-allocation.patch",
+      "upstream_sha256": "44dfe8ea590336fae48a4d5f7b8fd478a435d591a34ba77fe1d0a961c630ad57",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-4k-bootstrap-capacity.patch",
+      "upstream_sha256": "4ac39b497d88b28432bc7844c7137c8d2acc1992bef53f68c3512523a80b13a3",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-4k-signature-hash-cache.patch",
+      "upstream_sha256": "f9a8b4d39022a726ba1e0e4842248d57b20fe3a05fbf41b3a01f6700b2e3ca72",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-4k-user-abi.patch",
+      "upstream_sha256": "981ac483ae898426486aab475e22b2286bc1d820ad047c566182c3fbf435f6d4",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-aes-personality.patch",
+      "upstream_sha256": "02fe52c87a6bd801e602d03b54ce51de1362a2f2c6f75f5fc08122d3901aefff",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "iokit/KernelConfigTables.cpp: hunk 1 at 61 has no exact match: '    \"     \\'IOProviderClass\\' = IOService;\"\\n    \"     \\'IOExclaveProxy\\'  = 1:32;\"\\n    \"   }\"\\n    \")\";\\n'"
+    },
+    {
+      "patch": "native-arm-pan.patch",
+      "upstream_sha256": "7948f0ca8ad0ac5313a32bc8d9377290f88a7d64c880bbfac8e2b4c092e916f6",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-dt-panic-region.patch",
+      "upstream_sha256": "b60c2a9a72ea23832f1e64348a5c5d1152cf05db6c156283dd8a93c804cd89cb",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-priv-work-interval.patch",
+      "upstream_sha256": "6250b487e67dd35e97da59cc79040aa5d73f11106fbe5bc07e81047c4c33e2ed",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-smp-secondary.patch",
+      "upstream_sha256": "cc16c2d53cbcc50eb2547e2c6f5b61f325348d07495378d9cdf187246b4d315c",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-trust-cache-runtime.patch",
+      "upstream_sha256": "19e000ca6f70a8ddfefa503d2936894dd8315fae3ca2fb3e50d666d65252de79",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-union-getattrlistbulk.patch",
+      "upstream_sha256": "f5d665fd7250717cfacced8408a0b94f282eb2764e514f61a378f7d085c7a03b",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-work-interval-soft-fail.patch",
+      "upstream_sha256": "b163b85e0340abf2da104527a3b5c3c4e72abe6cacabb3bacb6001e84a67f3fe",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "native-work-interval-trace.patch",
+      "upstream_sha256": "f2c11511c172929572c3b075b0b0f3b8ae2c63d6f229c489c0339acc4f39815c",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "non-apple-cache-monitor.patch",
+      "upstream_sha256": "116ee4e61fb68e4a403049e349ceb23334e2eff0bec0eb11dc3bd5f3259fabdf",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "non-apple-iommu-bootstrap.patch",
+      "upstream_sha256": "a53aaf1073976aed1561cb609763c7a4214e245a50fb534cc77b643808df9e70",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "non-apple-pmap-field.patch",
+      "upstream_sha256": "82fe0a5021d59ddb766884f802f960ad67d61be63596f0bde136bf3875ff3ff8",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "null-root-media.patch",
+      "upstream_sha256": "a67ce9afd5af8178e83089ace6ce5d21f5e820b69e4c70dfc2cdae1be274678a",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-component-load-probes.patch",
+      "upstream_sha256": "1f228c5c6d8387b13cd8e0964ddeb56c858a5dae16478f3ed2baae8a2e4da1e9",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-legacy-start.patch",
+      "upstream_sha256": "a6ed6012f215e2c13c09f1b89fe986616af0a0674b0f6e4afd2194d4b8de4c0c",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-native-gpu-broker.patch",
+      "upstream_sha256": "dc7590c3298ead78a843f098d3f47df57350e15b30746890b162a24b6eb182f5",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-owner-boot-manifest.patch",
+      "upstream_sha256": "840a73448459b0ddad1ad7d8525ffb3bd0826d58a7e732f8283a4222c2df175e",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-owner-cache-carrier.patch",
+      "upstream_sha256": "11b292274599c7161d5eaef627d11934166b136c5e8c31098bcabb2569da3d0e",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-owner-root-binding-audit.patch",
+      "upstream_sha256": "f77d07af625d8cf2404185717e58738841ff453735f260fd7dc3c4e8526a4e69",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-owner-root-crypto-probe.patch",
+      "upstream_sha256": "35415f0a13a2770d835f0e837ecc47e6fa51934a6faa1edfc6900e5f5d479e4d",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-owner-systemos-mount.patch",
+      "upstream_sha256": "b10bab8eb09961edd61c5636b892b4b3b73d6458a6826d6dfb5f89141c1a1093",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "bsd/kern/kern_exec.c: hunk 1 at 183 has no exact match: '\\n#include \"kern_exec_internal.h\"\\n\\n#include <CodeSignature/Entitlements.h>\\n\\n#include <mach/exclaves.h>\\n\\n'"
+    },
+    {
+      "patch": "offline-owner-z-air-init.patch",
+      "upstream_sha256": "5b1b1252a0614eee6926fb05def89c49008a6d891dc8760e7d126d1a444ac6d9",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "offline-pgz-alignment-probe.patch",
+      "upstream_sha256": "632daaab2392352c69226670750285ead5bbf5aa90ea93198a7c79525a23ea0f",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "pgz-aligned-validation.patch",
+      "upstream_sha256": "b1c0e2a78de033f9c9b234820e9be93756dcd6765af8a1ecb76b209476058f25",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "osfmk/kern/zalloc.c: hunk 1 at 1474 has no exact match: '\\tzone_t zone = zone_by_id(zid);\\n\\tvm_offset_t elem, offs;\\n\\n\\telem = (vm_offset_t)addr;\\n\\toffs = (elem & PAGE_MASK) - zone_elem_inner_offs(zone);\\n\\n\\tif (from_zone_map(addr, 1)) {\\n\\t\\tstruct zone_page_metadata *meta;\\n\\n\\t\\tmeta = z'"
+    },
+    {
+      "patch": "public-entitlements-header.patch",
+      "upstream_sha256": "c6922bcfde308a02b39570f5f9af8d24e4cf4d88254a80e80218b6d410a784b8",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "bsd/net/necp_client.c: hunk 1 at 68 has no exact match: '\\n#include <os/refcnt.h>\\n\\n#include <CodeSignature/Entitlements.h>\\n\\n#if SKYWALK\\n#include <skywalk/os_skywalk_private.h>\\n'"
+    },
+    {
+      "patch": "published-freezer-condition.patch",
+      "upstream_sha256": "644646451d10ea720414c8ed7b31a5aa63846018a3bb686b966565169fbc9688",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "bsd/kern/kern_memorystatus_freeze.c: hunk 1 at 133 has no exact match: '#define FREEZE_APPS_IDLE_DELAY_MULTIPLIER_DEFAULT FREEZE_APPS_IDLE_DELAY_MULTIPLIER_FAST\\nunsigned int memorystatus_freeze_apps_idle_delay_multiplier = FREEZE_APPS_IDLE_DELAY_MULTIPLIER_DEFAULT;\\n\\n#if (XNU_TARGET_OS_IOS &&'"
+    },
+    {
+      "patch": "sheng-platform-power.patch",
+      "upstream_sha256": "6e68dbcdac670624f2a9806a61fef42110bfe6586029b3f1a0acb068c3a23ec2",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "source-corecrypto14-bootstrap.patch",
+      "upstream_sha256": "041f0d0627e83f5c276cfa87130cec04907cdd02682428d069af2a9af2a16ebd",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "source-machine-layer.patch",
+      "upstream_sha256": "1538783d2e5956f8ba65baeca4e9490711c43b8825123860847778b256291573",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "config/MASTER.arm64.bcm2837: hunk 1 at 16 has no exact match: '#  Standard Apple OS Configurations:\\n#  -------- ----- -- ---------------\\n#\\n#  KERNEL_BASE =    [ arm64 config_pmap_ppl xsmall msgb_small config_embedded config_requires_u32_munging ARM_EXTRAS_BASE ]\\n#  KERNEL_RELEASE = '"
+    },
+    {
+      "patch": "source-pthread-bootstrap.patch",
+      "upstream_sha256": "1bbf00cc2b4e8f227dddf2807818d10e07325beea8e6c2c0b12106228d31d643",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "zzx-pmap-sync-64bit-pa.patch",
+      "upstream_sha256": "b8419e7779f49c9c5360a8ae8e9b52a78968511a9e24e43b9edb799793e04496",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "osfmk/arm64/sptm/pmap/pmap.c: absent"
+    },
+    {
+      "patch": "zzy-native-gpu-addon-mount.patch",
+      "upstream_sha256": "bf53de7363413b00c06fa71071bb9bb4f8daddec2ecf7b33435bb0d99adf6ebb",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "bsd/kern/kern_exec.c: hunk 1 at 7193 has no exact match: 'uint8_t native_owner_data_seed_sha256[32];\\nchar native_owner_data_device_path[64];\\n\\nstatic int\\nnative_owner_data_prepare(proc_t p, user_addr_t scratch)\\n{\\n'"
+    },
+    {
+      "patch": "zzz-boot-progress.patch",
+      "upstream_sha256": "6e04d6ebe9035bb897920eceb3f6fddef1f5c6d0afa771a1f39dce741ee9b2be",
+      "virtual_pass": false,
+      "git_pass": false,
+      "error": "bsd/kern/bsd_init.c: hunk 4 at 773 has no exact match: '\\n#if defined(XNU_SHENG_PMGR) && XNU_SHENG_PMGR\\n\\textern void sheng_pmgr_run(void);\\n\\tsheng_pmgr_run();\\n#endif\\n\\n\\t/*\\n'"
+    },
+    {
+      "patch": "xnu-10063.141.1-security-init.patch",
+      "upstream_sha256": "f9ea76df15b01c8073c0fe8e38a1c05ac9db9202c393811756f6b616275b4675",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    },
+    {
+      "patch": "xnu-10063.141.1-sparse-index.patch",
+      "upstream_sha256": "d0a2da8ca1a0b4021629b0ecaadad20c0e6cf7b3205f8d780242a60034f44d91",
+      "virtual_pass": true,
+      "git_pass": true,
+      "error": ""
+    }
+  ],
+  "selection": [
+    {
+      "patch": "apple-only-cpu-tunables.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\apple-only-cpu-tunables.patch",
+      "sha256": "49ad719fce1e074777041483daef41a3214025d31b2b399858f4dab891b271b9",
+      "upstream_sha256": "91e431249a4d756bfca8b1800b4b283340c86d1899ec8196a2fe873e8d3c251e",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 1,
+          "line": 33
+        },
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 2,
+          "line": 776
+        }
+      ]
+    },
+    {
+      "patch": "architectural-timer-entry.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\architectural-timer-entry.patch",
+      "sha256": "809b0c951545d889a2a37c730189283e7e890340894bab6d937c914dbd20b8e5",
+      "upstream_sha256": "809b0c951545d889a2a37c730189283e7e890340894bab6d937c914dbd20b8e5",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 1,
+          "line": 688
+        }
+      ]
+    },
+    {
+      "patch": "armvirt-platform-personality.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\armvirt-platform-personality.patch",
+      "sha256": "00e7054c9ff2ae82b66f27bfbefd7620e9000503ea5b38b80aa90aab1e4b7225",
+      "upstream_sha256": "00e7054c9ff2ae82b66f27bfbefd7620e9000503ea5b38b80aa90aab1e4b7225",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "iokit/KernelConfigTables.cpp",
+          "hunk": 1,
+          "line": 35
+        }
+      ]
+    },
+    {
+      "patch": "cxx-flag-dependencies.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\cxx-flag-dependencies.patch",
+      "sha256": "a435e8797ed24a8338db53d0eaac49c163f90170c1fb7946d0c5cdee9d7d4b52",
+      "upstream_sha256": "a435e8797ed24a8338db53d0eaac49c163f90170c1fb7946d0c5cdee9d7d4b52",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/conf/Makefile.template",
+          "hunk": 1,
+          "line": 543
+        },
+        {
+          "path": "iokit/conf/Makefile.template",
+          "hunk": 1,
+          "line": 208
+        },
+        {
+          "path": "libkern/conf/Makefile.template",
+          "hunk": 1,
+          "line": 144
+        },
+        {
+          "path": "libsa/conf/Makefile.template",
+          "hunk": 1,
+          "line": 59
+        },
+        {
+          "path": "osfmk/conf/Makefile.template",
+          "hunk": 1,
+          "line": 379
+        },
+        {
+          "path": "pexpert/conf/Makefile.template",
+          "hunk": 1,
+          "line": 78
+        },
+        {
+          "path": "san/conf/Makefile.template",
+          "hunk": 1,
+          "line": 55
+        },
+        {
+          "path": "security/conf/Makefile.template",
+          "hunk": 1,
+          "line": 81
+        }
+      ]
+    },
+    {
+      "patch": "disabled-deferred-reclaim.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\disabled-deferred-reclaim.patch",
+      "sha256": "817a0b017aebb21f773aafe2b92a81be076abc66e29275d57220635339a407e1",
+      "upstream_sha256": "817a0b017aebb21f773aafe2b92a81be076abc66e29275d57220635339a407e1",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/vm/vm_user.c",
+          "hunk": 1,
+          "line": 4474
+        }
+      ]
+    },
+    {
+      "patch": "external-archive-dependencies.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\external-archive-dependencies.patch",
+      "sha256": "6f2ce506a3634d06260f14ccd86a84af7fbf7dc5e7c98a2381b6bff52199d7b5",
+      "upstream_sha256": "0a571de8361845266d7d419b0b3d5ebadbef986840c7e06eb981c0960d7fe374",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "makedefs/MakeInc.kernel",
+          "hunk": 1,
+          "line": 143
+        }
+      ]
+    },
+    {
+      "patch": "kernel-sdk-root.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\kernel-sdk-root.patch",
+      "sha256": "2bcf10f4bf171afbc358cb64e9bc742563dd21f5eadf0e7a17936e87fa8ba43d",
+      "upstream_sha256": "2bcf10f4bf171afbc358cb64e9bc742563dd21f5eadf0e7a17936e87fa8ba43d",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "makedefs/MakeInc.def",
+          "hunk": 1,
+          "line": 642
+        },
+        {
+          "path": "makedefs/MakeInc.def",
+          "hunk": 2,
+          "line": 885
+        }
+      ]
+    },
+    {
+      "patch": "local-availability.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\local-availability.patch",
+      "sha256": "a051857d524f8836068fd2f1182ebe9e9d9ccf28b9560fb27ad634b0cb93270e",
+      "upstream_sha256": "a051857d524f8836068fd2f1182ebe9e9d9ccf28b9560fb27ad634b0cb93270e",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/sys/make_symbol_aliasing.sh",
+          "hunk": 1,
+          "line": 34
+        }
+      ]
+    },
+    {
+      "patch": "mockfs-intermediate-lookup.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\mockfs-intermediate-lookup.patch",
+      "sha256": "51a5b76873c2a39b777bd4f1f5e78730ce72e93d548de6fbe4655f107731fa00",
+      "upstream_sha256": "51a5b76873c2a39b777bd4f1f5e78730ce72e93d548de6fbe4655f107731fa00",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 1,
+          "line": 103
+        }
+      ]
+    },
+    {
+      "patch": "mockfs-memory-device-width.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\mockfs-memory-device-width.patch",
+      "sha256": "506f4ba36e30a700f0d27370d07abbde6e2c689d13fbad3400a6b940569ae30a",
+      "upstream_sha256": "506f4ba36e30a700f0d27370d07abbde6e2c689d13fbad3400a6b940569ae30a",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 1,
+          "line": 99
+        }
+      ]
+    },
+    {
+      "patch": "mockfs-statfs.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\mockfs-statfs.patch",
+      "sha256": "58c9a51909b12dca9cd1ac2fdb94be748b43be1c979383b9504a0304fb16a809",
+      "upstream_sha256": "58c9a51909b12dca9cd1ac2fdb94be748b43be1c979383b9504a0304fb16a809",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 1,
+          "line": 227
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 2,
+          "line": 258
+        }
+      ]
+    },
+    {
+      "patch": "mockfs-test-file.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\mockfs-test-file.patch",
+      "sha256": "4a1ef86e0bdca7b633f59885961be1939574f8ba9814d1d75ebbfd0a7a8bd919",
+      "upstream_sha256": "4a1ef86e0bdca7b633f59885961be1939574f8ba9814d1d75ebbfd0a7a8bd919",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.h",
+          "hunk": 1,
+          "line": 46
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.h",
+          "hunk": 2,
+          "line": 59
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.h",
+          "hunk": 3,
+          "line": 68
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 1,
+          "line": 74
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 2,
+          "line": 146
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 3,
+          "line": 209
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 4,
+          "line": 253
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 5,
+          "line": 291
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 6,
+          "line": 337
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 1,
+          "line": 29
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 2,
+          "line": 47
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 3,
+          "line": 123
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 4,
+          "line": 403
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 5,
+          "line": 426
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vnops.c",
+          "hunk": 6,
+          "line": 436
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 1,
+          "line": 34
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 2,
+          "line": 79
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 3,
+          "line": 128
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 4,
+          "line": 176
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_vfsops.c",
+          "hunk": 5,
+          "line": 200
+        }
+      ]
+    },
+    {
+      "patch": "mockfs-typed-allocation.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\mockfs-typed-allocation.patch",
+      "sha256": "44dfe8ea590336fae48a4d5f7b8fd478a435d591a34ba77fe1d0a961c630ad57",
+      "upstream_sha256": "44dfe8ea590336fae48a4d5f7b8fd478a435d591a34ba77fe1d0a961c630ad57",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 1,
+          "line": 86
+        },
+        {
+          "path": "bsd/miscfs/mockfs/mockfs_fsnode.c",
+          "hunk": 2,
+          "line": 161
+        }
+      ]
+    },
+    {
+      "patch": "native-4k-bootstrap-capacity.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-4k-bootstrap-capacity.patch",
+      "sha256": "4ac39b497d88b28432bc7844c7137c8d2acc1992bef53f68c3512523a80b13a3",
+      "upstream_sha256": "4ac39b497d88b28432bc7844c7137c8d2acc1992bef53f68c3512523a80b13a3",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm/pmap/pmap.h",
+          "hunk": 1,
+          "line": 111
+        },
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 1,
+          "line": 424
+        },
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 2,
+          "line": 530
+        },
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 3,
+          "line": 615
+        },
+        {
+          "path": "osfmk/arm64/genassym.c",
+          "hunk": 1,
+          "line": 249
+        }
+      ]
+    },
+    {
+      "patch": "native-4k-signature-hash-cache.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-4k-signature-hash-cache.patch",
+      "sha256": "f9a8b4d39022a726ba1e0e4842248d57b20fe3a05fbf41b3a01f6700b2e3ca72",
+      "upstream_sha256": "f9a8b4d39022a726ba1e0e4842248d57b20fe3a05fbf41b3a01f6700b2e3ca72",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/sys/ubc_internal.h",
+          "hunk": 1,
+          "line": 155
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 1,
+          "line": 69
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 2,
+          "line": 109
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 3,
+          "line": 375
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 4,
+          "line": 3882
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 5,
+          "line": 4815
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 6,
+          "line": 5691
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 7,
+          "line": 5829
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 8,
+          "line": 5865
+        },
+        {
+          "path": "bsd/kern/ubc_subr.c",
+          "hunk": 9,
+          "line": 5919
+        }
+      ]
+    },
+    {
+      "patch": "native-4k-user-abi.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-4k-user-abi.patch",
+      "sha256": "981ac483ae898426486aab475e22b2286bc1d820ad047c566182c3fbf435f6d4",
+      "upstream_sha256": "981ac483ae898426486aab475e22b2286bc1d820ad047c566182c3fbf435f6d4",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/mach_loader.c",
+          "hunk": 1,
+          "line": 509
+        },
+        {
+          "path": "osfmk/arm/arm_init.c",
+          "hunk": 1,
+          "line": 392
+        },
+        {
+          "path": "osfmk/arm/arm_init.c",
+          "hunk": 2,
+          "line": 414
+        },
+        {
+          "path": "osfmk/arm/commpage/commpage.c",
+          "hunk": 1,
+          "line": 175
+        },
+        {
+          "path": "osfmk/vm/vm_shared_region.c",
+          "hunk": 1,
+          "line": 774
+        }
+      ]
+    },
+    {
+      "patch": "native-aes-personality.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\native-aes-personality.patch",
+      "sha256": "c126435813b4c39c8cb421522e01480cf1675a5dfd628293208e029e2da9b3cb",
+      "upstream_sha256": "02fe52c87a6bd801e602d03b54ce51de1362a2f2c6f75f5fc08122d3901aefff",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "iokit/KernelConfigTables.cpp",
+          "hunk": 1,
+          "line": 56
+        }
+      ]
+    },
+    {
+      "patch": "native-arm-pan.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-arm-pan.patch",
+      "sha256": "7948f0ca8ad0ac5313a32bc8d9377290f88a7d64c880bbfac8e2b4c092e916f6",
+      "upstream_sha256": "7948f0ca8ad0ac5313a32bc8d9377290f88a7d64c880bbfac8e2b4c092e916f6",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "pexpert/pexpert/arm64/BCM2837.h",
+          "hunk": 1,
+          "line": 18
+        }
+      ]
+    },
+    {
+      "patch": "native-dt-panic-region.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-dt-panic-region.patch",
+      "sha256": "b60c2a9a72ea23832f1e64348a5c5d1152cf05db6c156283dd8a93c804cd89cb",
+      "upstream_sha256": "b60c2a9a72ea23832f1e64348a5c5d1152cf05db6c156283dd8a93c804cd89cb",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "pexpert/arm/pe_init.c",
+          "hunk": 1,
+          "line": 93
+        },
+        {
+          "path": "pexpert/arm/pe_init.c",
+          "hunk": 2,
+          "line": 123
+        },
+        {
+          "path": "pexpert/arm/pe_init.c",
+          "hunk": 3,
+          "line": 134
+        }
+      ]
+    },
+    {
+      "patch": "native-priv-work-interval.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-priv-work-interval.patch",
+      "sha256": "6250b487e67dd35e97da59cc79040aa5d73f11106fbe5bc07e81047c4c33e2ed",
+      "upstream_sha256": "6250b487e67dd35e97da59cc79040aa5d73f11106fbe5bc07e81047c4c33e2ed",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/kern_priv.c",
+          "hunk": 1,
+          "line": 82
+        }
+      ]
+    },
+    {
+      "patch": "native-smp-secondary.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-smp-secondary.patch",
+      "sha256": "cc16c2d53cbcc50eb2547e2c6f5b61f325348d07495378d9cdf187246b4d315c",
+      "upstream_sha256": "cc16c2d53cbcc50eb2547e2c6f5b61f325348d07495378d9cdf187246b4d315c",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "pexpert/pexpert/arm64/board_config.h",
+          "hunk": 1,
+          "line": 91
+        },
+        {
+          "path": "osfmk/arm64/start.s",
+          "hunk": 1,
+          "line": 145
+        }
+      ]
+    },
+    {
+      "patch": "native-trust-cache-runtime.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-trust-cache-runtime.patch",
+      "sha256": "19e000ca6f70a8ddfefa503d2936894dd8315fae3ca2fb3e50d666d65252de79",
+      "upstream_sha256": "19e000ca6f70a8ddfefa503d2936894dd8315fae3ca2fb3e50d666d65252de79",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/kern/startup.c",
+          "hunk": 1,
+          "line": 734
+        }
+      ]
+    },
+    {
+      "patch": "native-union-getattrlistbulk.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-union-getattrlistbulk.patch",
+      "sha256": "f5d665fd7250717cfacced8408a0b94f282eb2764e514f61a378f7d085c7a03b",
+      "upstream_sha256": "f5d665fd7250717cfacced8408a0b94f282eb2764e514f61a378f7d085c7a03b",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/vfs/vfs_attrlist.c",
+          "hunk": 1,
+          "line": 4158
+        },
+        {
+          "path": "bsd/vfs/vfs_attrlist.c",
+          "hunk": 2,
+          "line": 4252
+        }
+      ]
+    },
+    {
+      "patch": "native-work-interval-soft-fail.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-work-interval-soft-fail.patch",
+      "sha256": "b163b85e0340abf2da104527a3b5c3c4e72abe6cacabb3bacb6001e84a67f3fe",
+      "upstream_sha256": "b163b85e0340abf2da104527a3b5c3c4e72abe6cacabb3bacb6001e84a67f3fe",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/kern/work_interval.c",
+          "hunk": 1,
+          "line": 1050
+        },
+        {
+          "path": "osfmk/kern/work_interval.c",
+          "hunk": 2,
+          "line": 1066
+        }
+      ]
+    },
+    {
+      "patch": "native-work-interval-trace.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\native-work-interval-trace.patch",
+      "sha256": "f2c11511c172929572c3b075b0b0f3b8ae2c63d6f229c489c0339acc4f39815c",
+      "upstream_sha256": "f2c11511c172929572c3b075b0b0f3b8ae2c63d6f229c489c0339acc4f39815c",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/sys_work_interval.c",
+          "hunk": 1,
+          "line": 38
+        },
+        {
+          "path": "bsd/kern/sys_work_interval.c",
+          "hunk": 2,
+          "line": 85
+        },
+        {
+          "path": "bsd/kern/sys_work_interval.c",
+          "hunk": 3,
+          "line": 96
+        }
+      ]
+    },
+    {
+      "patch": "non-apple-cache-monitor.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\non-apple-cache-monitor.patch",
+      "sha256": "116ee4e61fb68e4a403049e349ceb23334e2eff0bec0eb11dc3bd5f3259fabdf",
+      "upstream_sha256": "116ee4e61fb68e4a403049e349ceb23334e2eff0bec0eb11dc3bd5f3259fabdf",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm64/arm_vm_init.c",
+          "hunk": 1,
+          "line": 2143
+        },
+        {
+          "path": "osfmk/arm64/caches_asm.s",
+          "hunk": 1,
+          "line": 276
+        }
+      ]
+    },
+    {
+      "patch": "non-apple-iommu-bootstrap.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\non-apple-iommu-bootstrap.patch",
+      "sha256": "a53aaf1073976aed1561cb609763c7a4214e245a50fb534cc77b643808df9e70",
+      "upstream_sha256": "a53aaf1073976aed1561cb609763c7a4214e245a50fb534cc77b643808df9e70",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 1,
+          "line": 84
+        },
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 2,
+          "line": 861
+        },
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 3,
+          "line": 2189
+        },
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 4,
+          "line": 4681
+        },
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 5,
+          "line": 11627
+        },
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 6,
+          "line": 11648
+        }
+      ]
+    },
+    {
+      "patch": "non-apple-pmap-field.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\non-apple-pmap-field.patch",
+      "sha256": "82fe0a5021d59ddb766884f802f960ad67d61be63596f0bde136bf3875ff3ff8",
+      "upstream_sha256": "82fe0a5021d59ddb766884f802f960ad67d61be63596f0bde136bf3875ff3ff8",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm/pmap/pmap.h",
+          "hunk": 1,
+          "line": 447
+        }
+      ]
+    },
+    {
+      "patch": "null-root-media.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\null-root-media.patch",
+      "sha256": "a67ce9afd5af8178e83089ace6ce5d21f5e820b69e4c70dfc2cdae1be274678a",
+      "upstream_sha256": "a67ce9afd5af8178e83089ace6ce5d21f5e820b69e4c70dfc2cdae1be274678a",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "iokit/Kernel/IOService.cpp",
+          "hunk": 1,
+          "line": 5178
+        }
+      ]
+    },
+    {
+      "patch": "offline-component-load-probes.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-component-load-probes.patch",
+      "sha256": "1f228c5c6d8387b13cd8e0964ddeb56c858a5dae16478f3ed2baae8a2e4da1e9",
+      "upstream_sha256": "1f228c5c6d8387b13cd8e0964ddeb56c858a5dae16478f3ed2baae8a2e4da1e9",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 473
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 2,
+          "line": 773
+        },
+        {
+          "path": "iokit/Kernel/IOUserClient.cpp",
+          "hunk": 1,
+          "line": 6603
+        }
+      ]
+    },
+    {
+      "patch": "offline-legacy-start.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-legacy-start.patch",
+      "sha256": "a6ed6012f215e2c13c09f1b89fe986616af0a0674b0f6e4afd2194d4b8de4c0c",
+      "upstream_sha256": "a6ed6012f215e2c13c09f1b89fe986616af0a0674b0f6e4afd2194d4b8de4c0c",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 1200
+        }
+      ]
+    },
+    {
+      "patch": "offline-native-gpu-broker.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-native-gpu-broker.patch",
+      "sha256": "dc7590c3298ead78a843f098d3f47df57350e15b30746890b162a24b6eb182f5",
+      "upstream_sha256": "dc7590c3298ead78a843f098d3f47df57350e15b30746890b162a24b6eb182f5",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 895
+        }
+      ]
+    },
+    {
+      "patch": "offline-owner-boot-manifest.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-owner-boot-manifest.patch",
+      "sha256": "840a73448459b0ddad1ad7d8525ffb3bd0826d58a7e732f8283a4222c2df175e",
+      "upstream_sha256": "840a73448459b0ddad1ad7d8525ffb3bd0826d58a7e732f8283a4222c2df175e",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "iokit/bsddev/IOKitBSDInit.cpp",
+          "hunk": 1,
+          "line": 553
+        }
+      ]
+    },
+    {
+      "patch": "offline-owner-cache-carrier.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-owner-cache-carrier.patch",
+      "sha256": "11b292274599c7161d5eaef627d11934166b136c5e8c31098bcabb2569da3d0e",
+      "upstream_sha256": "11b292274599c7161d5eaef627d11934166b136c5e8c31098bcabb2569da3d0e",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/vm/vm_unix.c",
+          "hunk": 1,
+          "line": 2213
+        },
+        {
+          "path": "bsd/vm/vm_unix.c",
+          "hunk": 2,
+          "line": 2604
+        },
+        {
+          "path": "bsd/vm/vm_unix.c",
+          "hunk": 3,
+          "line": 2618
+        },
+        {
+          "path": "bsd/vm/vm_unix.c",
+          "hunk": 4,
+          "line": 2641
+        }
+      ]
+    },
+    {
+      "patch": "offline-owner-root-binding-audit.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-owner-root-binding-audit.patch",
+      "sha256": "f77d07af625d8cf2404185717e58738841ff453735f260fd7dc3c4e8526a4e69",
+      "upstream_sha256": "f77d07af625d8cf2404185717e58738841ff453735f260fd7dc3c4e8526a4e69",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 1029
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 2,
+          "line": 1188
+        }
+      ]
+    },
+    {
+      "patch": "offline-owner-root-crypto-probe.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-owner-root-crypto-probe.patch",
+      "sha256": "35415f0a13a2770d835f0e837ecc47e6fa51934a6faa1edfc6900e5f5d479e4d",
+      "upstream_sha256": "35415f0a13a2770d835f0e837ecc47e6fa51934a6faa1edfc6900e5f5d479e4d",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 888
+        }
+      ]
+    },
+    {
+      "patch": "offline-owner-systemos-mount.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\offline-owner-systemos-mount.patch",
+      "sha256": "1f88ed8eeae5c5eda782ccce1ae335361cb7b69c77e986167118bd18a53f42b8",
+      "upstream_sha256": "b10bab8eb09961edd61c5636b892b4b3b73d6458a6826d6dfb5f89141c1a1093",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 1,
+          "line": 182
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 2,
+          "line": 6749
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 3,
+          "line": 7066
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 4,
+          "line": 7125
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 5,
+          "line": 7148
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 6,
+          "line": 7159
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 7,
+          "line": 7172
+        }
+      ]
+    },
+    {
+      "patch": "offline-owner-z-air-init.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\offline-owner-z-air-init.patch",
+      "sha256": "5b1b1252a0614eee6926fb05def89c49008a6d891dc8760e7d126d1a444ac6d9",
+      "upstream_sha256": "5b1b1252a0614eee6926fb05def89c49008a6d891dc8760e7d126d1a444ac6d9",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 1,
+          "line": 7138
+        }
+      ]
+    },
+    {
+      "patch": "offline-pgz-alignment-probe.patch",
+      "upstream_sha256": "632daaab2392352c69226670750285ead5bbf5aa90ea93198a7c79525a23ea0f",
+      "status": "deferred/not-applicable",
+      "reason": "Optional probe calls that absent aligned API; deferred, not claimed compatible"
+    },
+    {
+      "patch": "pgz-aligned-validation.patch",
+      "upstream_sha256": "b1c0e2a78de033f9c9b234820e9be93756dcd6765af8a1ecb76b209476058f25",
+      "status": "deferred/not-applicable",
+      "reason": "8796 lacks zone_id_require_aligned; not transplanted as a new API"
+    },
+    {
+      "patch": "public-entitlements-header.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\public-entitlements-header.patch",
+      "sha256": "ff4ca93bf834f750f9f1442733cd94995b1b08d9a509d1a956e71a97ffa804c3",
+      "upstream_sha256": "c6922bcfde308a02b39570f5f9af8d24e4cf4d88254a80e80218b6d410a784b8",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "EXTERNAL_HEADERS/CoreEntitlements/CoreEntitlements.h",
+          "hunk": 1,
+          "line": 5
+        }
+      ]
+    },
+    {
+      "patch": "published-freezer-condition.patch",
+      "upstream_sha256": "644646451d10ea720414c8ed7b31a5aa63846018a3bb686b966565169fbc9688",
+      "status": "deferred/not-applicable",
+      "reason": "8796 lacks the malformed 10063 conditional; preserve 8796 freezer policy"
+    },
+    {
+      "patch": "sheng-platform-power.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\sheng-platform-power.patch",
+      "sha256": "6e68dbcdac670624f2a9806a61fef42110bfe6586029b3f1a0acb068c3a23ec2",
+      "upstream_sha256": "6e68dbcdac670624f2a9806a61fef42110bfe6586029b3f1a0acb068c3a23ec2",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 764
+        }
+      ]
+    },
+    {
+      "patch": "source-corecrypto14-bootstrap.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\source-corecrypto14-bootstrap.patch",
+      "sha256": "041f0d0627e83f5c276cfa87130cec04907cdd02682428d069af2a9af2a16ebd",
+      "upstream_sha256": "041f0d0627e83f5c276cfa87130cec04907cdd02682428d069af2a9af2a16ebd",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/prng/prng_random.c",
+          "hunk": 1,
+          "line": 420
+        }
+      ]
+    },
+    {
+      "patch": "source-machine-layer.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\source-machine-layer.patch",
+      "sha256": "923b51bac67695c304ee59309aa8db57a2cbe5719ffed1581875f7db4e37b2fc",
+      "upstream_sha256": "1538783d2e5956f8ba65baeca4e9490711c43b8825123860847778b256291573",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "config/MASTER",
+          "hunk": 1,
+          "line": 321
+        },
+        {
+          "path": "config/MASTER.arm64.bcm2837",
+          "hunk": 1,
+          "line": 16
+        },
+        {
+          "path": "config/MASTER.arm64.bcm2837",
+          "hunk": 2,
+          "line": 50
+        },
+        {
+          "path": "osfmk/conf/files.arm64",
+          "hunk": 1,
+          "line": 25
+        }
+      ]
+    },
+    {
+      "patch": "source-pthread-bootstrap.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\source-pthread-bootstrap.patch",
+      "sha256": "1bbf00cc2b4e8f227dddf2807818d10e07325beea8e6c2c0b12106228d31d643",
+      "upstream_sha256": "1bbf00cc2b4e8f227dddf2807818d10e07325beea8e6c2c0b12106228d31d643",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/source_pthread_bootstrap.c",
+          "hunk": 1,
+          "line": 1
+        }
+      ]
+    },
+    {
+      "patch": "zzx-pmap-sync-64bit-pa.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\zzx-pmap-sync-64bit-pa.patch",
+      "sha256": "50747f5c4f51abf1e0e3d0d82be07d76909a3f28eceffb9e927b0a8aca6f4f82",
+      "upstream_sha256": "b8419e7779f49c9c5360a8ae8e9b52a78968511a9e24e43b9edb799793e04496",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm/pmap/pmap.c",
+          "hunk": 1,
+          "line": 6887
+        }
+      ]
+    },
+    {
+      "patch": "zzy-native-gpu-addon-mount.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\patches\\xnu\\zzy-native-gpu-addon-mount.patch",
+      "sha256": "bf53de7363413b00c06fa71071bb9bb4f8daddec2ecf7b33435bb0d99adf6ebb",
+      "upstream_sha256": "bf53de7363413b00c06fa71071bb9bb4f8daddec2ecf7b33435bb0d99adf6ebb",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 1,
+          "line": 6929
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 2,
+          "line": 7062
+        },
+        {
+          "path": "bsd/miscfs/bindfs/bind_vfsops.c",
+          "hunk": 1,
+          "line": 78
+        },
+        {
+          "path": "bsd/miscfs/bindfs/bind_vfsops.c",
+          "hunk": 2,
+          "line": 141
+        },
+        {
+          "path": "bsd/miscfs/bindfs/bind_vfsops.c",
+          "hunk": 3,
+          "line": 233
+        },
+        {
+          "path": "bsd/miscfs/bindfs/bind_vnops.c",
+          "hunk": 1,
+          "line": 105
+        },
+        {
+          "path": "bsd/miscfs/bindfs/bindfs.h",
+          "hunk": 1,
+          "line": 81
+        },
+        {
+          "path": "osfmk/kern/startup.c",
+          "hunk": 1,
+          "line": 468
+        }
+      ]
+    },
+    {
+      "patch": "zzz-boot-progress.patch",
+      "chosen": "D:\\Code\\UniXNU-nuwa\\patches\\xnu-8796-candidates\\zzz-boot-progress.patch",
+      "sha256": "1e7adabe9d00642d1d4ced10b572d5f62785db883dec468c9677a2869ddc1148",
+      "upstream_sha256": "6e04d6ebe9035bb897920eceb3f6fddef1f5c6d0afa771a1f39dce741ee9b2be",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/arm/arm_init.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "osfmk/arm/arm_init.c",
+          "hunk": 2,
+          "line": 363
+        },
+        {
+          "path": "osfmk/arm/arm_init.c",
+          "hunk": 3,
+          "line": 525
+        },
+        {
+          "path": "osfmk/kern/startup.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "osfmk/kern/startup.c",
+          "hunk": 2,
+          "line": 222
+        },
+        {
+          "path": "osfmk/kern/startup.c",
+          "hunk": 3,
+          "line": 233
+        },
+        {
+          "path": "osfmk/kern/startup.c",
+          "hunk": 4,
+          "line": 647
+        },
+        {
+          "path": "osfmk/console/video_console.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "osfmk/console/video_console.c",
+          "hunk": 2,
+          "line": 1231
+        },
+        {
+          "path": "osfmk/console/video_console.c",
+          "hunk": 3,
+          "line": 2893
+        },
+        {
+          "path": "osfmk/console/video_console.c",
+          "hunk": 4,
+          "line": 3048
+        },
+        {
+          "path": "osfmk/console/serial_console.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "osfmk/console/serial_console.c",
+          "hunk": 2,
+          "line": 246
+        },
+        {
+          "path": "pexpert/arm/pe_kprintf.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "pexpert/arm/pe_kprintf.c",
+          "hunk": 2,
+          "line": 59
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 2,
+          "line": 560
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 3,
+          "line": 580
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 4,
+          "line": 768
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 5,
+          "line": 993
+        },
+        {
+          "path": "bsd/kern/bsd_init.c",
+          "hunk": 6,
+          "line": 1082
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 2,
+          "line": 1316
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 3,
+          "line": 7198
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 4,
+          "line": 7208
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 5,
+          "line": 7721
+        },
+        {
+          "path": "bsd/kern/kern_exec.c",
+          "hunk": 6,
+          "line": 7884
+        },
+        {
+          "path": "osfmk/arm64/sleh.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "osfmk/arm64/sleh.c",
+          "hunk": 2,
+          "line": 1068
+        },
+        {
+          "path": "osfmk/arm64/sleh.c",
+          "hunk": 3,
+          "line": 1485
+        },
+        {
+          "path": "osfmk/arm64/sleh.c",
+          "hunk": 4,
+          "line": 1859
+        },
+        {
+          "path": "osfmk/kern/boot_progress.h",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "osfmk/kern/Makefile",
+          "hunk": 1,
+          "line": 113
+        },
+        {
+          "path": "bsd/kern/kern_exit.c",
+          "hunk": 1,
+          "line": 1
+        },
+        {
+          "path": "bsd/kern/kern_exit.c",
+          "hunk": 2,
+          "line": 1804
+        },
+        {
+          "path": "bsd/kern/kern_exit.c",
+          "hunk": 3,
+          "line": 1821
+        },
+        {
+          "path": "bsd/kern/kern_exit.c",
+          "hunk": 4,
+          "line": 1851
+        }
+      ]
+    },
+    {
+      "patch": "xnu-10063.141.1-security-init.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\kits\\NativePrelink\\patches\\xnu-10063.141.1-security-init.patch",
+      "sha256": "f9ea76df15b01c8073c0fe8e38a1c05ac9db9202c393811756f6b616275b4675",
+      "upstream_sha256": "f9ea76df15b01c8073c0fe8e38a1c05ac9db9202c393811756f6b616275b4675",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "libkern/c++/OSKext.cpp",
+          "hunk": 1,
+          "line": 73
+        },
+        {
+          "path": "libkern/c++/OSKext.cpp",
+          "hunk": 2,
+          "line": 8289
+        }
+      ]
+    },
+    {
+      "patch": "xnu-10063.141.1-sparse-index.patch",
+      "chosen": "D:\\Code\\PortingiOS\\common\\sources\\UniXNU\\kits\\NativePrelink\\patches\\xnu-10063.141.1-sparse-index.patch",
+      "sha256": "d0a2da8ca1a0b4021629b0ecaadad20c0e6cf7b3205f8d780242a60034f44d91",
+      "upstream_sha256": "d0a2da8ca1a0b4021629b0ecaadad20c0e6cf7b3205f8d780242a60034f44d91",
+      "status": "virtual-pass",
+      "hunks": [
+        {
+          "path": "osfmk/kern/kalloc.c",
+          "hunk": 1,
+          "line": 949
+        },
+        {
+          "path": "osfmk/kern/kalloc.c",
+          "hunk": 2,
+          "line": 1033
+        },
+        {
+          "path": "osfmk/kern/kalloc.c",
+          "hunk": 3,
+          "line": 1095
+        },
+        {
+          "path": "osfmk/kern/kalloc.c",
+          "hunk": 4,
+          "line": 1113
+        },
+        {
+          "path": "osfmk/kern/kalloc.c",
+          "hunk": 5,
+          "line": 1150
+        }
+      ]
+    }
+  ],
+  "complete_sequence": true,
+  "combined_diff_check": {
+    "command": [
+      "C:/Program Files/Git/cmd/git.exe",
+      "-c",
+      "safe.directory=D:/Code/PortingiOS/common/sources/xnu-ios16-full",
+      "--no-optional-locks",
+      "-C",
+      "D:\\Code\\PortingiOS\\common\\sources\\xnu-ios16-full",
+      "apply",
+      "--check",
+      "--verbose",
+      "D:\\Code\\UniXNU-nuwa\\reports\\xnu-8796-sequence\\selected-combined.patch"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Checking patch osfmk/arm64/start.s...\nChecking patch iokit/KernelConfigTables.cpp...\nChecking patch bsd/conf/Makefile.template...\nChecking patch iokit/conf/Makefile.template...\nChecking patch libkern/conf/Makefile.template...\nChecking patch libsa/conf/Makefile.template...\nChecking patch osfmk/conf/Makefile.template...\nChecking patch pexpert/conf/Makefile.template...\nChecking patch san/conf/Makefile.template...\nChecking patch security/conf/Makefile.template...\nChecking patch osfmk/vm/vm_user.c...\nChecking patch makedefs/MakeInc.kernel...\nChecking patch makedefs/MakeInc.def...\nChecking patch bsd/sys/make_symbol_aliasing.sh...\nChecking patch bsd/miscfs/mockfs/mockfs_vnops.c...\nChecking patch bsd/miscfs/mockfs/mockfs_vfsops.c...\nChecking patch bsd/miscfs/mockfs/mockfs_fsnode.h...\nChecking patch bsd/miscfs/mockfs/mockfs_fsnode.c...\nChecking patch osfmk/arm/pmap/pmap.h...\nChecking patch osfmk/arm64/genassym.c...\nChecking patch bsd/sys/ubc_internal.h...\nChecking patch bsd/kern/ubc_subr.c...\nChecking patch bsd/kern/mach_loader.c...\nChecking patch osfmk/arm/arm_init.c...\nChecking patch osfmk/arm/commpage/commpage.c...\nChecking patch osfmk/vm/vm_shared_region.c...\nChecking patch pexpert/pexpert/arm64/BCM2837.h...\nChecking patch pexpert/arm/pe_init.c...\nChecking patch bsd/kern/kern_priv.c...\nChecking patch pexpert/pexpert/arm64/board_config.h...\nChecking patch osfmk/kern/startup.c...\nChecking patch bsd/vfs/vfs_attrlist.c...\nChecking patch osfmk/kern/work_interval.c...\nChecking patch bsd/kern/sys_work_interval.c...\nChecking patch osfmk/arm64/arm_vm_init.c...\nChecking patch osfmk/arm64/caches_asm.s...\nChecking patch osfmk/arm/pmap/pmap.c...\nChecking patch iokit/Kernel/IOService.cpp...\nChecking patch bsd/kern/bsd_init.c...\nChecking patch iokit/Kernel/IOUserClient.cpp...\nChecking patch iokit/bsddev/IOKitBSDInit.cpp...\nChecking patch bsd/vm/vm_unix.c...\nChecking patch bsd/kern/kern_exec.c...\nChecking patch EXTERNAL_HEADERS/CoreEntitlements/CoreEntitlements.h...\nChecking patch osfmk/prng/prng_random.c...\nChecking patch config/MASTER...\nChecking patch config/MASTER.arm64.bcm2837...\nChecking patch osfmk/conf/files.arm64...\nChecking patch bsd/kern/source_pthread_bootstrap.c...\nChecking patch bsd/miscfs/bindfs/bind_vfsops.c...\nChecking patch bsd/miscfs/bindfs/bind_vnops.c...\nChecking patch bsd/miscfs/bindfs/bindfs.h...\nChecking patch osfmk/console/video_console.c...\nChecking patch osfmk/console/serial_console.c...\nChecking patch pexpert/arm/pe_kprintf.c...\nChecking patch osfmk/arm64/sleh.c...\nChecking patch osfmk/kern/boot_progress.h...\nChecking patch osfmk/kern/Makefile...\nChecking patch bsd/kern/kern_exit.c...\nChecking patch libkern/c++/OSKext.cpp...\nChecking patch osfmk/kern/kalloc.c...\n"
+  },
+  "source_status_before": {
+    "command": [
+      "C:/Program Files/Git/cmd/git.exe",
+      "-c",
+      "safe.directory=D:/Code/PortingiOS/common/sources/xnu-ios16-full",
+      "--no-optional-locks",
+      "-C",
+      "D:\\Code\\PortingiOS\\common\\sources\\xnu-ios16-full",
+      "status",
+      "--porcelain",
+      "--untracked-files=all"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "source_status_after": {
+    "command": [
+      "C:/Program Files/Git/cmd/git.exe",
+      "-c",
+      "safe.directory=D:/Code/PortingiOS/common/sources/xnu-ios16-full",
+      "--no-optional-locks",
+      "-C",
+      "D:\\Code\\PortingiOS\\common\\sources\\xnu-ios16-full",
+      "status",
+      "--porcelain",
+      "--untracked-files=all"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}
