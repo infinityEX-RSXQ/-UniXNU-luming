@@ -122,6 +122,23 @@ if deployment != (2, 0x110000):
 archive = out / ('lib' + component + '.a')
 archive.unlink(missing_ok=True)
 objects = [destination]
+if component == 'NativeAES':
+    # BOOTSTRAP-ONLY: the original kernelcache exports IOPCIMessageFromMach but the
+    # xnu-8796 source kernel does not. Define empty variants so NativePrelink can bind
+    # the original kext pointers; this is not a functional IOPCIFamily implementation.
+    stub_s = out / 'bootstrap_kernel_stubs.s'
+    stub_s.write_text(
+        '.text\n'
+        '.globl _IOPCIMessageFromMach\n'
+        '.globl IOPCIMessageFromMach\n'
+        '_IOPCIMessageFromMach:\n'
+        'IOPCIMessageFromMach:\n'
+        '\tret\n',
+        encoding='utf-8')
+    stub_o = out / 'bootstrap_kernel_stubs.o'
+    subprocess.run(['xcrun', 'clang', '-target', 'arm64-apple-ios17.0',
+                    '-c', str(stub_s), '-o', str(stub_o)], check=True)
+    objects.append(stub_o)
 if component == 'NativeUfs':
     # BOOTSTRAP-ONLY no-op providers: XNU's diagnostic patches reference these symbols
     # even when boot progress / legacy display are disabled. Remove them once the real
