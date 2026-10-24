@@ -10,6 +10,31 @@ import struct
 import xml.etree.ElementTree as ET
 
 from native_prelink import backed_offset, exports, macho, plan, unserialize_xml
+import native_prelink as _np
+
+_original_unique_kernel_binding = _np.unique_kernel_binding
+
+
+def _unique_kernel_binding_with_aliases(address, original_exports, native_by_name):
+    try:
+        return _original_unique_kernel_binding(address, original_exports, native_by_name)
+    except ValueError:
+        names = original_exports.get(address, [])
+        print('DEBUG binding names:', [repr(name) for name in names], flush=True)
+        for name in names:
+            print('DEBUG key lookup:', repr(name), name in native_by_name,
+                  native_by_name.get(name), flush=True)
+        for name in names:
+            aliases = [name, '_' + name, '__' + name, name.lstrip('_')]
+            for alias in aliases:
+                choices = native_by_name.get(alias)
+                if choices and len(choices) == 1:
+                    print('DEBUG alias binding:', repr(name), '->', repr(alias), next(iter(choices)), flush=True)
+                    return next(iter(choices))
+        raise
+
+
+_np.unique_kernel_binding = _unique_kernel_binding_with_aliases
 
 # Standard SHA-256 round constants, stored as 64 little-endian words. Some
 # assemblers embed these data in executable sections; do not decode as code.
