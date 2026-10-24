@@ -34,8 +34,8 @@ CONFIG_XNU_ARMVIRT_PLATFORM=n
 
 # --- storage -----------------------------------------------------------------
 # UFS storage driver (luming UFS controller values: TODO(device)).
-# BOOTSTRAP: storage binding audit is not available yet.
-CONFIG_XNU_NATIVE_UFS=n
+# BOOTSTRAP: enabled in non-verified mode so XNU can probe storage before root exists.
+CONFIG_XNU_NATIVE_UFS=y
 # RAM block driver for the Data seed path.
 # BOOTSTRAP: depends on the qualified storage/AES binding closure.
 CONFIG_XNU_NATIVE_RAM_BLOCK=n
