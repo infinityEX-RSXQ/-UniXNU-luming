@@ -238,7 +238,7 @@ BUILDID_STRING = "luming-prebuild"
 # device tree and the optional trust cache and Data seed.  DarwinBoot is in the FV.
 [payload]
 volume = "LUMINGESP"               # FAT label, <= 11 characters
-size_mib = 192
+size_mib = 80
 loader = "firmware"
 title = "UniXNU luming pre-build"
 # MEASURED 2026-10-22: this unit is the 12 GiB SKU.  /proc/meminfo reports MemTotal
