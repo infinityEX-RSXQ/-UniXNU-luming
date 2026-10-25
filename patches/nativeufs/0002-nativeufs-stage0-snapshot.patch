@@ -1,0 +1,391 @@
+diff --git a/NativeUfs.cpp b/NativeUfs.cpp
+index 639cf3d52ce2e73543ddfe257d04f20de3824f64..2b45ee048f1119a32f18e41e512b0d43a29b59b6 100644
+--- a/NativeUfs.cpp
++++ b/NativeUfs.cpp
+@@ -909,6 +909,8 @@ static void hostWrite (unsigned offset, uint32_t value)
+ 
+ #include "RootQueue.h"
+ 
++#include "UfsSnapshot.h"
++
+ #include "RootCommands.h"
+ 
+ // Bring the live controller up for reading: map, SMMU pass-through for the UFS stream, take over
+@@ -923,6 +925,12 @@ static bool hostBringUp (const char **why)
+   if (gHost.ready) {
+     return true;
+   }
++  // Stage 0: read-only GCC/SMMU snapshot and the safety gate before the first controller
++  // access. It refuses (with a visible reason) if firmware left UFS unpowered/unclocked, so
++  // the HC window is never touched in that case (REPORT-UFS-PLAN.md P5).
++  if (!nativeUfsStage0 (why)) {
++    return false;
++  }
+   gRootDiagnostic.stage = "controller map";
+   gHost.hc = mapPhys (UFS_HC_BASE, UFS_HC_SIZE, gHost.hcMap);
+   if (!gHost.hc) {
+@@ -1204,7 +1212,12 @@ static void rootDiagnosticFailure (const char *reason)
+ {
+   // Kept even when the panic diagnostic is off, so the boot page can say why nothing was published.
+   native_ufs_root_failure = reason;
+-  if (!gRootDiagnosticEnabled) return;
++  if (!gRootDiagnosticEnabled) {
++    // native-ufs-panic=1 turns soft failures into a visible panic with a fresh read-only
++    // snapshot; without it the old silent return is unchanged.
++    nativeUfsPanicOnFailure (reason);
++    return;
++  }
+   gRootDiagnostic.published = native_ufs_blocks_published;
+   gRootDiagnostic.reads = native_ufs_block_reads;
+   gRootDiagnostic.failures = native_ufs_block_failures;
+diff --git a/UfsSnapshot.h b/UfsSnapshot.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..310f8774e6bcaa0f73d43ffbe06491853a35cddc
+--- /dev/null
++++ b/UfsSnapshot.h
+@@ -0,0 +1,238 @@
++// SPDX-License-Identifier: BSD-2-Clause-Patent
++// Stage-0 read-only GCC/HC/SMMU snapshot and stage reporting for NativeUfs.
++//
++// Included from NativeUfs.cpp after read32()/mapPhys()/gHost are defined and before
++// hostBringUp(); every function here only reads hardware. The UFS HC window is mapped
++// and read only after the pure UfsStage.h policy has accepted the GCC power/clock bits,
++// so a firmware that left UFS unpowered cannot cause a bus stall at the HC window.
++//
++// Boot arguments:
++//   native-ufs-stage=N   stop before stage N (0 = after the stage-0 snapshot, before the
++//                        first controller access; 1..6 = the existing injected stops).
++//   native-ufs-panic=1   panics with the formatted snapshot whenever a stage stop or a
++//                        hostBringUp/root failure happens, so the state is visible on a
++//                        machine without a working serial console.
++#ifndef NATIVE_UFS_SNAPSHOT_H
++#define NATIVE_UFS_SNAPSHOT_H
++
++#include "UfsStage.h"
++
++static const unsigned kUfsGccMapBase = 0x77000;   // GCC_BASE + kUfsGccMapBase is mapped
++static const unsigned kUfsGccWindow = 0x1000;
++static const uint64_t kUfsSmmuBase = 0x15000000ULL; // APPS SMMU
++static const unsigned kUfsSmmuWindow = 0x1000;
++static const unsigned kUfsStageLimitNone = ~0U;
++
++// Branch order is the UfsStage.h kUfsBranch* order.
++static const unsigned kUfsBranchOffsets[kUfsBranchCount] = {
++  GCC_UFS_PHY_AXI_ENABLE,
++  GCC_UFS_PHY_AHB_ENABLE,
++  GCC_UFS_PHY_TX_SYMBOL0_ENABLE,
++  GCC_UFS_PHY_RX_SYMBOL0_ENABLE,
++  GCC_UFS_PHY_UNIPRO_CORE_ENABLE,
++  GCC_UFS_PHY_ICE_CORE_ENABLE,
++  GCC_UFS_PHY_PHY_AUX_ENABLE,
++  GCC_UFS_PHY_RX_SYMBOL1_ENABLE,
++  GCC_AGGRE_UFS_PHY_AXI_ENABLE,
++};
++
++static bool nativeUfsPanicRequested (void)
++{
++  unsigned value = 0;
++  return PE_parse_boot_argn ("native-ufs-panic", &value, sizeof (value)) && value == 1;
++}
++
++static unsigned nativeUfsStageLimit (void)
++{
++  static int cached = -1;
++  if (cached < 0) {
++    unsigned value = 0;
++    if (!PE_parse_boot_argn ("native-ufs-stage", &value, sizeof (value)) || value > 8) {
++      value = kUfsStageLimitNone;
++    }
++    cached = static_cast<int> (value);
++  }
++  return static_cast<unsigned> (cached);
++}
++
++// Read-only capture of the GCC power/clock state. Always-on GCC window; safe before
++// any UFS access, and the only place the stage-0 gate learns whether HC is allowed.
++static bool nativeUfsCaptureGcc (UfsGccSnapshot &gcc, OSSharedPtr<IOMemoryMap> &gccMap,
++                                 OSSharedPtr<IOMemoryMap> &memMap)
++{
++  uintptr_t gccBase = mapPhys (GCC_BASE + kUfsGccMapBase, kUfsGccWindow, gccMap);
++  uintptr_t memBase = mapPhys (GCC_BASE + GCC_UFS_MEM_PHY_GDSCR, kUfsGccWindow, memMap);
++  if (!gccBase || !memBase) {
++    return false;
++  }
++  gcc.gdsc = read32 (gccBase, GCC_UFS_PHY_GDSCR - kUfsGccMapBase);
++  gcc.memPhyGdsc = read32 (memBase, 0);
++  for (unsigned index = 0; index < kUfsBranchCount; index++) {
++    gcc.branch[index] = read32 (gccBase, kUfsBranchOffsets[index] - kUfsGccMapBase);
++  }
++  ufsGccClassify (gcc);
++  return true;
++}
++
++// Cached live registers from the already mapped windows (no new mapping, no writes).
++static void nativeUfsReadLiveSnapshot (uint32_t hc[6], unsigned *hcRead,
++                                       uint32_t smmu[5], unsigned *smmuRead)
++{
++  *hcRead = 0;
++  *smmuRead = 0;
++  for (unsigned index = 0; index < 6; index++) {
++    hc[index] = 0;
++  }
++  for (unsigned index = 0; index < 5; index++) {
++    smmu[index] = 0;
++  }
++  if (gHost.hc) {
++    hc[0] = read32 (gHost.hc, 0x00);
++    hc[1] = read32 (gHost.hc, 0x08);
++    hc[2] = read32 (gHost.hc, 0x30);
++    hc[3] = read32 (gHost.hc, 0x34);
++    hc[4] = read32 (gHost.hc, 0x58);
++    hc[5] = read32 (gHost.hc, 0x20);
++    *hcRead = 1;
++  }
++  if (gHost.smmu) {
++    smmu[0] = read32 (gHost.smmu, 0x20);
++    smmu[1] = read32 (gHost.smmu, 0x24);
++    smmu[2] = read32 (gHost.smmu, 0x28);
++    smmu[3] = read32 (gHost.smmu, 0x00);
++    smmu[4] = read32 (gHost.smmu, 0xc00);
++    *smmuRead = 1;
++  }
++}
++
++static void nativeUfsLogSnapshot (const char *title, const char *why, const UfsGccSnapshot &gcc,
++                                  const uint32_t hc[6], unsigned hcRead,
++                                  const uint32_t smmu[5], unsigned smmuRead)
++{
++  char text[1200];
++  formatUfsSnapshot (text, sizeof (text), title, why, gcc, hc, hcRead, smmu, smmuRead);
++  IOLog ("%s\n", text);
++}
++
++// Stage stop/failure: the log line is always written; with native-ufs-panic=1 the same
++// text becomes a kernel panic so the state survives on a screen-only machine.
++static void nativeUfsFailSnapshot (const char *title, const char *why, const UfsGccSnapshot &gcc,
++                                   const uint32_t hc[6], unsigned hcRead,
++                                   const uint32_t smmu[5], unsigned smmuRead)
++{
++  char text[1200];
++  formatUfsSnapshot (text, sizeof (text), title, why, gcc, hc, hcRead, smmu, smmuRead);
++  IOLog ("%s\n", text);
++  if (nativeUfsPanicRequested ()) {
++    panic ("%s", text);
++  }
++}
++
++// Stage 0: before the first controller access. Reads GCC, gates on power/clocks, then
++// reads the SMMU and the HC windows read-only. Returns false (with *why) when UFS is
++// not safe to touch; never writes any register.
++static bool nativeUfsStage0 (const char **why)
++{
++  UfsGccSnapshot gcc;
++  OSSharedPtr<IOMemoryMap> gccMap, memMap, smmuMap, hcMap;
++  uint32_t hc[6] = {};
++  uint32_t smmu[5] = {};
++  unsigned hcRead = 0, smmuRead = 0;
++
++  gRootDiagnostic.stage = "stage 0 GCC/SMMU snapshot";
++  if (!nativeUfsCaptureGcc (gcc, gccMap, memMap)) {
++    *why = "GCC map";
++    nativeUfsFailSnapshot ("NATIVE_UFS stage 0", *why, gcc, hc, 0, smmu, 0);
++    return false;
++  }
++  if (!ufsStage0Policy (gcc, why)) {
++    nativeUfsFailSnapshot ("NATIVE_UFS stage 0", *why, gcc, hc, 0, smmu, 0);
++    return false;
++  }
++
++  uintptr_t smmuBase = mapPhys (kUfsSmmuBase, kUfsSmmuWindow, smmuMap);
++  if (smmuBase) {
++    smmu[0] = read32 (smmuBase, 0x20);
++    smmu[1] = read32 (smmuBase, 0x24);
++    smmu[2] = read32 (smmuBase, 0x28);
++    smmu[3] = read32 (smmuBase, 0x00);
++    smmu[4] = read32 (smmuBase, 0xc00);
++    smmuRead = 1;
++  }
++
++  // The GCC gate passed: mapping and reading the HC window is now safe.
++  uintptr_t hcBase = mapPhys (UFS_HC_BASE, UFS_HC_SIZE, hcMap);
++  if (!hcBase) {
++    *why = "controller map";
++    nativeUfsFailSnapshot ("NATIVE_UFS stage 0", *why, gcc, hc, 0, smmu, smmuRead);
++    return false;
++  }
++  hc[0] = read32 (hcBase, 0x00);
++  hc[1] = read32 (hcBase, 0x08);
++  hc[2] = read32 (hcBase, 0x30);
++  hc[3] = read32 (hcBase, 0x34);
++  hc[4] = read32 (hcBase, 0x58);
++  hc[5] = read32 (hcBase, 0x20);
++  hcRead = 1;
++  gRootDiagnostic.cap = hc[0];
++  gRootDiagnostic.version = hc[1];
++  gRootDiagnostic.hcs = hc[2];
++  gRootDiagnostic.hce = hc[3];
++  gRootDiagnostic.doorbell = hc[4];
++  gRootDiagnostic.interrupt = hc[5];
++  gRootDiagnostic.smmuId1 = smmu[1];
++  gRootDiagnostic.smmuId2 = smmu[2];
++  nativeUfsLogSnapshot ("NATIVE_UFS stage 0", "reachable", gcc, hc, hcRead, smmu, smmuRead);
++
++  if (nativeUfsStageLimit () == 0) {
++    *why = "stage limit";
++    nativeUfsFailSnapshot ("NATIVE_UFS stage 0 stop", *why, gcc, hc, hcRead, smmu, smmuRead);
++    return false;
++  }
++  return true;
++}
++
++// Called by the build-time injected stops in hostBringUp(): visible instead of the old
++// silent `return false`. `stage` 1..6 map to the injected anchors. The attribute keeps
++// ordinary (non --with-ufs) builds warning-clean, since without the injected call this
++// function has no caller in the translation unit.
++static bool __attribute__ ((unused)) nativeUfsStageStop (unsigned stage, const char **why)
++{
++  const unsigned limit = nativeUfsStageLimit ();
++  if (stage < limit) {
++    return false;
++  }
++  *why = "stage limit";
++  UfsGccSnapshot gcc;
++  OSSharedPtr<IOMemoryMap> gccMap, memMap;
++  if (!nativeUfsCaptureGcc (gcc, gccMap, memMap)) {
++    gcc = UfsGccSnapshot ();
++  }
++  uint32_t hc[6] = {};
++  uint32_t smmu[5] = {};
++  unsigned hcRead = 0, smmuRead = 0;
++  nativeUfsReadLiveSnapshot (hc, &hcRead, smmu, &smmuRead);
++  nativeUfsFailSnapshot ("NATIVE_UFS stage stop", *why, gcc, hc, hcRead, smmu, smmuRead);
++  return true;
++}
++
++// Root soft-failure visibility: with native-ufs-panic=1 a hostBringUp/startRoot failure
++// becomes a panic carrying the last stored diagnostics plus a fresh read-only snapshot.
++static void nativeUfsPanicOnFailure (const char *why)
++{
++  if (!nativeUfsPanicRequested ()) {
++    return;
++  }
++  UfsGccSnapshot gcc;
++  OSSharedPtr<IOMemoryMap> gccMap, memMap;
++  if (!nativeUfsCaptureGcc (gcc, gccMap, memMap)) {
++    gcc = UfsGccSnapshot ();
++  }
++  uint32_t hc[6] = {};
++  uint32_t smmu[5] = {};
++  unsigned hcRead = 0, smmuRead = 0;
++  nativeUfsReadLiveSnapshot (hc, &hcRead, smmu, &smmuRead);
++  nativeUfsFailSnapshot ("NATIVE_UFS failure", why, gcc, hc, hcRead, smmu, smmuRead);
++}
++
++#endif /* NATIVE_UFS_SNAPSHOT_H */
+diff --git a/UfsStage.h b/UfsStage.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..5ffa636775013313b6613f32996f0741677a7269
+--- /dev/null
++++ b/UfsStage.h
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: BSD-2-Clause-Patent
++// Pure policy and formatting for the NativeUfs stage-0 GCC/HC/SMMU snapshot.
++//
++// No IOKit, MMIO or boot-argument access here: NativeUfs.cpp captures the raw
++// register values and this header decides whether the UFS host-controller window
++// may be touched, and formats the snapshot for IOLog/panic. Keeping it pure lets
++// agents/nativeufs-fix/tools host-test the exact decision matrix without macOS.
++//
++// Policy from REPORT-UFS-PLAN.md §5 and P5: GCC is in the always-on CX domain and
++// is read first. The HC window is only read when the UFS PHY GDSC reports PWR_ON
++// (bit 31) and the AXI/AHB bus branches are enabled/running; otherwise the
++// driver refuses with an explicit reason instead of risking a bus stall from an
++// unclocked UFS block.
++#ifndef NATIVE_UFS_STAGE_H
++#define NATIVE_UFS_STAGE_H
++
++enum : unsigned {
++  kUfsBranchAxi = 0,
++  kUfsBranchAhb,
++  kUfsBranchTx0,
++  kUfsBranchRx0,
++  kUfsBranchUnipro,
++  kUfsBranchIce,
++  kUfsBranchAux,
++  kUfsBranchRx1,
++  kUfsBranchAggre,
++  kUfsBranchCount
++};
++
++// Raw GCC values as read by the driver; branch[] uses the kUfsBranch* indexes.
++struct UfsGccSnapshot {
++  uint32_t gdsc = 0;
++  uint32_t memPhyGdsc = 0;
++  uint32_t branch[kUfsBranchCount] = {};
++  bool powered = false;
++  bool busClocks = false;
++};
++
++// GDSCR bit31: UFS PHY power domain is on. Taken from the SM8550/SM8735 GDSC layout
++// (the driver already documents "GDSCR bit31 PWR_ON" in inspect()).
++static inline bool ufsGccPowered (const UfsGccSnapshot &gcc)
++{
++  return (gcc.gdsc & 0x80000000U) != 0;
++}
++
++// AXI/AHB must be enabled and AXI must not report CLK_OFF. Hardware 2026-10-17 on the
++// sheng reference: AHB is enabled but reports CLK_OFF (bit31) with hwcg_bit=1 set, so
++// CLK_OFF alone does not gate the read; the enable bits do. This mirrors the existing
++// inspect() predicate exactly, extended to the read-only snapshot.
++static inline bool ufsGccBusClocks (const UfsGccSnapshot &gcc)
++{
++  const uint32_t axi = gcc.branch[kUfsBranchAxi];
++  const uint32_t ahb = gcc.branch[kUfsBranchAhb];
++  return !(axi & 0x80000000U) && (ahb & 0x1U) && (axi & 0x1U);
++}
++
++static inline void ufsGccClassify (UfsGccSnapshot &gcc)
++{
++  gcc.powered = ufsGccPowered (gcc);
++  gcc.busClocks = ufsGccBusClocks (gcc);
++}
++
++// Stage-0 gate: safe to touch /map the UFS HC window?
++static inline bool ufsStage0Policy (const UfsGccSnapshot &gcc, const char **why)
++{
++  if (!gcc.powered) {
++    *why = "firmware did not leave UFS powered";
++    return false;
++  }
++  if (!gcc.busClocks) {
++    *why = "firmware did not leave UFS bus clocks enabled";
++    return false;
++  }
++  return true;
++}
++
++// hc[]: cap, ver, hcs, hce, doorbell, is.  smmu[]: idr0, idr1, idr2, sCR0, first S2CR.
++// %llx/%08x are used inline (this header intentionally has no stdio dependency; the
++// translation unit supplies a C library or XNU libkern snprintf).
++static inline int formatUfsSnapshot (char *out, size_t capacity, const char *title, const char *why,
++    const UfsGccSnapshot &gcc, const uint32_t hc[6], unsigned hcRead,
++    const uint32_t smmu[5], unsigned smmuRead)
++{
++  return snprintf (out, capacity,
++      "%s: %s\n"
++      "GCC gdsc=%08x memphy_gdsc=%08x powered=%u busclocks=%u\n"
++      "GCC branches axi=%08x ahb=%08x tx0=%08x rx0=%08x unipro=%08x ice=%08x aux=%08x rx1=%08x aggre=%08x\n"
++      "HC read=%u cap=%08x ver=%08x hcs=%08x hce=%08x db=%08x is=%08x\n"
++      "SMMU read=%u idr0=%08x idr1=%08x idr2=%08x scr0=%08x s2cr0=%08x",
++      title, why ? why : "-",
++      gcc.gdsc, gcc.memPhyGdsc, gcc.powered ? 1U : 0U, gcc.busClocks ? 1U : 0U,
++      gcc.branch[kUfsBranchAxi], gcc.branch[kUfsBranchAhb], gcc.branch[kUfsBranchTx0],
++      gcc.branch[kUfsBranchRx0], gcc.branch[kUfsBranchUnipro], gcc.branch[kUfsBranchIce],
++      gcc.branch[kUfsBranchAux], gcc.branch[kUfsBranchRx1], gcc.branch[kUfsBranchAggre],
++      hcRead, hc ? hc[0] : 0, hc ? hc[1] : 0, hc ? hc[2] : 0, hc ? hc[3] : 0,
++      hc ? hc[4] : 0, hc ? hc[5] : 0,
++      smmuRead, smmu ? smmu[0] : 0, smmu ? smmu[1] : 0, smmu ? smmu[2] : 0,
++      smmu ? smmu[3] : 0, smmu ? smmu[4] : 0);
++}
++
++#endif /* NATIVE_UFS_STAGE_H */
