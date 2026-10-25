@@ -186,10 +186,34 @@ def main():
             if ufs_source.is_file():
                 text = ufs_source.read_text(encoding='utf-8')
                 text = text.replace('"qcom,sm8550-ufshc"', '"qcom,ufshc"')
-                text = text.replace(
-                    'static bool hostBringUp (const char **why)\n{',
-                    'static bool hostBringUp (const char **why)\n{\n'
-                    '  for (;;) { __asm__ volatile ("wfe"); }\n')
+                marker = 'static bool hostBringUp (const char **why)\n{'
+                helper = (
+                    'static unsigned hostStageLimit = 0;\n'
+                    'static bool hostStageStop (unsigned stage, const char **why)\n'
+                    '{\n'
+                    '  if (hostStageLimit == 0) {\n'
+                    '    PE_parse_boot_argn ("native-ufs-stage", &hostStageLimit, sizeof (hostStageLimit));\n'
+                    '    if (hostStageLimit == 0) { hostStageLimit = ~0U; }\n'
+                    '  }\n'
+                    '  if (stage >= hostStageLimit) { *why = "stage limit"; return true; }\n'
+                    '  return false;\n'
+                    '}\n'
+                    'static bool hostBringUp (const char **why)\n{')
+                text = text.replace(marker, helper)
+                inserts = (
+                    ('  gRootDiagnostic.stage = "DMA allocation";', 1),
+                    ('  gRootDiagnostic.stage = "SMMU and request list";', 2),
+                    ('  if (!hostStartQueue (why)) return false;', 3),
+                    ('  gRootDiagnostic.stage = "NOP OUT";', 4),
+                    ('  gRootDiagnostic.stage = "power mode query";', 5),
+                    ('  gRootDiagnostic.stage = "LUN ready";', 6),
+                )
+                for anchor, stage in inserts:
+                    if text.count(anchor) != 1:
+                        raise SystemExit(f'hostBringUp anchor count for stage {stage}: {text.count(anchor)}')
+                    text = text.replace(
+                        anchor,
+                        f'  if (hostStageStop ({stage}, why)) {{ return false; }}\n{anchor}')
                 ufs_source.write_text(text, encoding='utf-8')
             storage_headers = work / 'build/storage-abi/include/IOKit/storage'
             device_headers = DEVICE / 'include/IOStorageFamily'
