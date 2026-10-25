@@ -79,6 +79,10 @@ if component == 'NativeUfs':
     # later verified-block build but do not define NATIVE_VERIFIED_BLOCK here.
     command += ['-I', str(ROOT / 'kits/VerifiedRoot/include'), '-I', str(ROOT / 'drivers/NativeVirtioBlock'),
                 '-mgeneral-regs-only']
+    # This device repository targets luming (SM8735 / gcc-tuna). The base UniXNU tree
+    # and the sheng reference build compile the same driver without this define and keep
+    # the SM8550 GCC table; see agents/nativeufs-fix/patches/0001.
+    command += ['-DNATIVE_UFS_SM8735=1']
     # NativeUfs.cpp defines timerTicks()/native_ufs_read_ticks only under
     # NATIVE_VERIFIED_BLOCK, but the non-verified read path still uses them.
     compat = out / 'bootstrap_ufs_compat.h'
