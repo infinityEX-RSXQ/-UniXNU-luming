@@ -19,6 +19,8 @@ BASE_COMMIT = '75bc13dd34dc4e403826793739e316a264ce00dd'
 XNU_COMMIT = '1b191cb58250d0705d8a51287127505aa4bc0789'
 BASELINE_HASH = '3486867d8c639eb10d31be16e875dbbdbb1d27afd97aedbb8ba930f0093c6852'
 FIREHOSE_HASH = 'e30d44b2633fb509fefbb316cb2824abb394e3e5779d4b6d86f8ed2b4f91c057'
+GENI_PATCH_NAME = '0001-pexpert-arm-add-polled-QCOM-GENI-UART-console.patch'
+GENI_PATCH_HASH = '699b1bcfec619118bb378f3b8f69508a6f27b34fefb38fd45926cfc8ff5d8e07'
 
 
 def sha(path):
@@ -47,7 +49,7 @@ def capture_kernel_make(script):
     return script[:start] + captured + script[end:]
 
 
-def inputs(base):
+def inputs(base, with_geni=False):
     evidence = json.loads((DEVICE / 'reports/xnu-8796-sequence/results.json').read_text(encoding='utf-8'))
     if evidence['base_head'] != BASE_COMMIT or evidence['source_head'] != XNU_COMMIT:
         raise ValueError('Review evidence pins differ')
@@ -94,6 +96,13 @@ def inputs(base):
     if not donor_bridge.is_file():
         raise ValueError('Missing reviewed real VFS donor bridge')
     patches.append(donor_bridge)
+    if with_geni:
+        geni_patch = DEVICE / 'patches/xnu-8796-geni' / GENI_PATCH_NAME
+        if not geni_patch.is_file():
+            raise ValueError('Missing reviewed GENI UART patch')
+        if sha(geni_patch) != GENI_PATCH_HASH:
+            raise ValueError(f'Reviewed GENI patch changed: {GENI_PATCH_NAME}')
+        patches.append(geni_patch)
     return patches, script, firehose_script
 
 
@@ -107,9 +116,13 @@ def main():
     parser.add_argument('--base', required=True, type=Path)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--with-ufs', action='store_true')
+    parser.add_argument('--with-geni', action='store_true',
+                        help='UFS variant plus the reviewed polled QCOM GENI UART console patch')
     args = parser.parse_args()
+    if args.with_geni and not args.with_ufs:
+        raise SystemExit('--with-geni requires --with-ufs')
     base = args.base.resolve()
-    patches, script, firehose_script = inputs(base)
+    patches, script, firehose_script = inputs(base, args.with_geni)
     summary = {'base_commit': BASE_COMMIT, 'xnu_commit': XNU_COMMIT,
                'patches': [{'name': p.name, 'sha256': sha(p)} for p in patches],
                'baseline_adapter_sha256': hashlib.sha256(script.encode()).hexdigest(),
@@ -119,6 +132,9 @@ def main():
                'donor_compatibility_patch_count': sum(p.parent.name == 'xnu-8796-donor-candidates' for p in patches),
                'scope': 'source compile/link only; optional device archives disabled',
                'kernel_built': False, 'prelinked': False, 'device_verified': False}
+    summary['with_geni'] = bool(args.with_geni)
+    summary['geni_patch'] = ({'name': GENI_PATCH_NAME, 'sha256': GENI_PATCH_HASH}
+                             if args.with_geni else None)
     if args.check:
         shell = ('C:/Program Files/Git/bin/bash.exe' if platform.system() == 'Windows'
                  else shutil.which('bash'))
@@ -182,24 +198,22 @@ def main():
         run(['file', kernel])
         run(['xcrun', 'otool', '-l', kernel])
         if args.with_ufs:
+            summary['nativeufs_patches'] = [
+                {'name': name, 'sha256': sha(DEVICE / 'patches/nativeufs' / name)}
+                for name in ('0001-nativeufs-sm8735-probe-gcc.patch',
+                             '0002-nativeufs-stage0-snapshot.patch')]
             ufs_source = work / 'drivers/NativeUfs/NativeUfs.cpp'
             if ufs_source.is_file():
-                text = ufs_source.read_text(encoding='utf-8')
-                text = text.replace('"qcom,sm8550-ufshc"', '"qcom,ufshc"')
-                marker = 'static bool hostBringUp (const char **why)\n{'
-                helper = (
-                    'static unsigned hostStageLimit = 0;\n'
-                    'static bool hostStageStop (unsigned stage, const char **why)\n'
-                    '{\n'
-                    '  if (hostStageLimit == 0) {\n'
-                    '    PE_parse_boot_argn ("native-ufs-stage", &hostStageLimit, sizeof (hostStageLimit));\n'
-                    '    if (hostStageLimit == 0) { hostStageLimit = ~0U; }\n'
-                    '  }\n'
-                    '  if (stage >= hostStageLimit) { *why = "stage limit"; return true; }\n'
-                    '  return false;\n'
-                    '}\n'
-                    'static bool hostBringUp (const char **why)\n{')
-                text = text.replace(marker, helper)
+                # NativeUfs source patches first: the staging injection below calls
+                # nativeUfsStageStop(), which 0002 defines (and stage 0 lives inside
+                # hostBringUp). The patches are reviewed under patches/nativeufs/.
+                for patch_name in ('0001-nativeufs-sm8735-probe-gcc.patch',
+                                   '0002-nativeufs-stage0-snapshot.patch'):
+                    patch = DEVICE / 'patches/nativeufs' / patch_name
+                    if not patch.is_file():
+                        raise ValueError(f'missing NativeUfs patch {patch}')
+                    run(['patch', '-p1', '--forward', '--batch', '-i', str(patch)],
+                        cwd=work / 'drivers/NativeUfs')
                 inserts = (
                     ('  gRootDiagnostic.stage = "DMA allocation";', 1),
                     ('  gRootDiagnostic.stage = "SMMU and request list";', 2),
@@ -208,12 +222,13 @@ def main():
                     ('  gRootDiagnostic.stage = "power mode query";', 5),
                     ('  gRootDiagnostic.stage = "LUN ready";', 6),
                 )
+                text = ufs_source.read_text(encoding='utf-8')
                 for anchor, stage in inserts:
                     if text.count(anchor) != 1:
                         raise SystemExit(f'hostBringUp anchor count for stage {stage}: {text.count(anchor)}')
                     text = text.replace(
                         anchor,
-                        f'  if (hostStageStop ({stage}, why)) {{ return false; }}\n{anchor}')
+                        f'  if (nativeUfsStageStop ({stage}, why)) {{ return false; }}\n{anchor}')
                 ufs_source.write_text(text, encoding='utf-8')
             storage_headers = work / 'build/storage-abi/include/IOKit/storage'
             device_headers = DEVICE / 'include/IOStorageFamily'
@@ -258,6 +273,14 @@ def main():
                 raise ValueError('Relinked kernel is not an ARM64 MH_EXECUTE')
             summary['ufs_archives'] = [str(archive.relative_to(work)) for archive in archives]
             summary['kernel_sha256'] = sha(kernel)
+            kernel_bytes = kernel.read_bytes()
+            summary['ufs_compiled_markers'] = {
+                name: name.encode() in kernel_bytes for name in (
+                    'qcom,sm8735-ufshc', 'qcom,ufshc',
+                    'NATIVE_UFS stage 0',
+                    'firmware did not leave UFS powered',
+                    'firmware did not leave UFS bus clocks enabled')}
+            summary['ufs_required_markers'] = 'all ufs_compiled_markers must be true'
         try:
             run([sys.executable, '-B', DEVICE / 'scripts/ci/audit-driver-archives.py',
                  '--work', work, '--base', base])
@@ -278,6 +301,13 @@ def main():
                 raise
             summary['platform_link_audit'] = 'failed (experimental UFS archive closure; kernel linked)'
         summary['kernel_sha256'] = sha(kernel)
+        if args.with_geni:
+            kernel_bytes = kernel.read_bytes()
+            summary['geni_compiled_markers'] = {
+                name: name.encode() in kernel_bytes for name in (
+                    'qcom,geni-uart', 'qcom_geni_uart_transmit_ready',
+                    'qcom_geni_uart_serial_functions')}
+            summary['geni_required_markers'] = 'all geni_compiled_markers must be true'
     finally:
         source = work / '.cache/xnu-work'
         if source.is_dir():
