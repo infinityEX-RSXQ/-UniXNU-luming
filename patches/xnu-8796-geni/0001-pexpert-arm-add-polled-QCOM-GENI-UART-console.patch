@@ -1,0 +1,341 @@
+diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
+index 997a4aba65a1193af12184364ece936abf189205..2eac1b2460e94e00370fd7aa37a0965f4e117b05 100644
+--- a/pexpert/arm/pe_serial.c
++++ b/pexpert/arm/pe_serial.c
+@@ -27,6 +27,9 @@
+ #include <pexpert/arm64/board_config.h>
+ #include <arm64/proc_reg.h>
+ #include <pexpert/arm/protos.h>
++#ifdef QCOM_GENI_UART
++#include <pexpert/arm/qcom_geni_uart.h>
++#endif
+ #include <kern/sched_prim.h>
+ #if HIBERNATION
+ #include <machine/pal_hibernate.h>
+@@ -591,6 +594,168 @@ SECURITY_READ_ONLY_LATE(static struct pe_serial_functions) pi3_uart_serial_funct
+ 
+ /*****************************************************************************/
+ 
++#ifdef QCOM_GENI_UART
++/* ---- QCOM GENI UART BACKEND BEGIN (host-testable block) ----------------- */
++/*
++ * Polled Qualcomm GENI/QUPv3 UART early console - variant (i),
++ * "bootloader-initialized".  The firmware (ABL/XBL/UEFI) is assumed to have
++ * enabled the SE7 clock/pins and programmed 115200 8N1.  This backend only:
++ *   - maps the ADT /arm-io/uart reg window (serial_init passes the base),
++ *   - leaves FIFO (PIO) mode: clears GENI_DMA_MODE_EN if a firmware GSI path
++ *     left the serial engine in DMA mode,
++ *   - normalizes TX packing to one character per FIFO word,
++ *   - writes bytes into the TX FIFO while it has space.
++ * It does not program GCC clocks, TLMM pinmux, the QUP wrapper or the baud
++ * divider; if the console stays silent, variant (ii) from
++ * agents/xnu-geni/REPORT-GENI.md is required.
++ *
++ * Probing is lazy: serial_init() calls ->init() before the `serial` boot-arg
++ * is parsed, so no SE register is touched until output or input is actually
++ * used.  Boards that boot without a serial console never access an unclocked
++ * SE.  The first TX FIFO status read is also a presence probe: an all-ones
++ * result marks the console unavailable and no register write happens.
++ */
++static vm_offset_t qcom_geni_uart_base = 0;
++static uint32_t qcom_geni_uart_tx_depth = 16;
++static bool qcom_geni_uart_probed = false;
++static bool qcom_geni_uart_failed = false;
++
++#define QCOM_GENI_RD(reg) \
++	(*(volatile uint32_t *)(qcom_geni_uart_base + (reg)))
++#define QCOM_GENI_WR(reg, value) \
++	(*(volatile uint32_t *)(qcom_geni_uart_base + (reg)) = (uint32_t)(value))
++
++/* One-time hardware probe and FIFO-mode setup.  Safe to call repeatedly. */
++static void
++qcom_geni_uart_probe(void)
++{
++	uint32_t status;
++	uint32_t hw_param0;
++	uint32_t depth;
++	uint32_t dma_mode;
++
++	if (qcom_geni_uart_probed || qcom_geni_uart_failed || qcom_geni_uart_base == 0) {
++		return;
++	}
++	qcom_geni_uart_probed = true;
++
++	/* Presence probe.  An unclocked or wrong SE window reads all-ones; do not
++	 * write anything in that case (an AHB access to an unclocked SE can raise
++	 * an SError on this SoC family). */
++	status = QCOM_GENI_RD(QCOM_GENI_SE_GENI_TX_FIFO_STATUS);
++	if (status == 0xffffffffu ||
++	    (status & QCOM_GENI_TX_FIFO_WC_MASK) == QCOM_GENI_TX_FIFO_WC_MASK) {
++		qcom_geni_uart_failed = true;
++		return;
++	}
++
++	/* FIFO (PIO) mode is required for a polled console; a firmware DMA/GSI
++	 * sequence may have set DMA mode and left the FIFO interface idle. */
++	dma_mode = QCOM_GENI_RD(QCOM_GENI_SE_GENI_DMA_MODE_EN);
++	if (dma_mode & QCOM_GENI_DMA_MODE_ENABLED) {
++		QCOM_GENI_WR(QCOM_GENI_SE_GENI_DMA_MODE_EN,
++		    dma_mode & ~QCOM_GENI_DMA_MODE_ENABLED);
++	}
++
++#if QCOM_GENI_UART_PROGRAM_PACKING
++	/*
++	 * Normalize TX packing to one 8-bit character per FIFO word (the packing
++	 * the vendor UART console port uses, see qcom_geni_uart.h).  A firmware
++	 * tty setup may have left 4-characters-per-word packing; without this a
++	 * 32-bit TX FIFO write would emit three bytes of padding per character.
++	 */
++	QCOM_GENI_WR(QCOM_GENI_SE_GENI_TX_PACKING_CFG0, QCOM_GENI_UART_TX_PACK_CFG0);
++	QCOM_GENI_WR(QCOM_GENI_SE_GENI_TX_PACKING_CFG1, QCOM_GENI_UART_TX_PACK_CFG1);
++#endif /* QCOM_GENI_UART_PROGRAM_PACKING */
++
++	/* TX FIFO depth from GENI_HW_PARAM_0; fall back to a conservative 8. */
++	hw_param0 = QCOM_GENI_RD(QCOM_GENI_SE_GENI_HW_PARAM_0);
++	if (hw_param0 == 0xffffffffu) {
++		qcom_geni_uart_failed = true;
++		return;
++	}
++	depth = (hw_param0 & QCOM_GENI_HW_PARAM0_TX_DEPTH_MASK_QUPV3) >>
++	    QCOM_GENI_HW_PARAM0_TX_DEPTH_SHIFT;
++	if (depth < 2 || depth > 0x100) {
++		depth = (hw_param0 & QCOM_GENI_HW_PARAM0_TX_DEPTH_MASK_QUPV2) >>
++		    QCOM_GENI_HW_PARAM0_TX_DEPTH_SHIFT;
++	}
++	if (depth < 2 || depth > 0x100) {
++		depth = 8;
++	}
++	qcom_geni_uart_tx_depth = depth;
++}
++
++static void
++qcom_geni_uart_init(void)
++{
++	/* Called from serial_init() before the serial boot-arg is parsed and again
++	 * on wake; only reset software state here. */
++	qcom_geni_uart_probed = false;
++	qcom_geni_uart_failed = false;
++	qcom_geni_uart_tx_depth = 16;
++}
++
++static unsigned int
++qcom_geni_uart_transmit_ready(void)
++{
++	uint32_t poll;
++
++	qcom_geni_uart_probe();
++	if (qcom_geni_uart_failed) {
++		/* Drop output instead of blocking the kernel forever. */
++		return 1;
++	}
++	for (poll = 0; poll < QCOM_GENI_TX_POLL_LIMIT; poll++) {
++		uint32_t status = QCOM_GENI_RD(QCOM_GENI_SE_GENI_TX_FIFO_STATUS);
++		if ((status & QCOM_GENI_TX_FIFO_WC_MASK) < qcom_geni_uart_tx_depth) {
++			return 1;
++		}
++	}
++	/* Clock gated, wrong window or a wedged SE: stop trying, keep booting. */
++	qcom_geni_uart_failed = true;
++	return 1;
++}
++
++static void
++qcom_geni_uart_transmit_data(uint8_t c)
++{
++	if (!qcom_geni_uart_failed && qcom_geni_uart_base != 0) {
++		QCOM_GENI_WR(QCOM_GENI_SE_GENI_TX_FIFO, (uint32_t)c);
++	}
++}
++
++static unsigned int
++qcom_geni_uart_receive_ready(void)
++{
++	qcom_geni_uart_probe();
++	if (qcom_geni_uart_failed) {
++		return 0;
++	}
++	return (QCOM_GENI_RD(QCOM_GENI_SE_GENI_RX_FIFO_STATUS) &
++	    QCOM_GENI_RX_FIFO_WC_MASK) != 0;
++}
++
++static uint8_t
++qcom_geni_uart_receive_data(void)
++{
++	return (uint8_t)(QCOM_GENI_RD(QCOM_GENI_SE_GENI_RX_FIFO) & 0xff);
++}
++/* ---- QCOM GENI UART BACKEND END ---------------------------------------- */
++
++static struct pe_serial_functions qcom_geni_uart_serial_functions =
++{
++	.init = qcom_geni_uart_init,
++	.transmit_ready = qcom_geni_uart_transmit_ready,
++	.transmit_data = qcom_geni_uart_transmit_data,
++	.receive_ready = qcom_geni_uart_receive_ready,
++	.receive_data = qcom_geni_uart_receive_data,
++	.device = SERIAL_QCOM_GENI_UART
++};
++#endif /* QCOM_GENI_UART */
++
++/*****************************************************************************/
++
+ #ifdef VMAPPLE_UART
+ 
+ static vm_offset_t vmapple_uart0_base_vaddr = 0;
+@@ -772,7 +937,16 @@ serial_init(void)
+ 	soc_base = pe_arm_get_soc_base_phys();
+ 
+ 	if (soc_base == 0) {
++#ifdef QCOM_GENI_UART
++		/*
++		 * The luming ADT describes /arm-io/ranges with base 0: child `reg`
++		 * values are already physical addresses (the UART node is
++		 * 0x00A9C000/0x4000).  Keep going so the GENI backend can map `reg`
++		 * directly.  Apple's targets never reach this point with 0.
++		 */
++#else
+ 		return 0;
++#endif /* QCOM_GENI_UART */
+ 	}
+ 
+ 	PE_parse_boot_argn("disable-uart-irq", &disable_uart_irq, sizeof(disable_uart_irq));
+@@ -791,6 +965,32 @@ serial_init(void)
+ 	}
+ #endif /* PI3_UART */
+ 
++#ifdef QCOM_GENI_UART
++	/*
++	 * Polled GENI UART console (luming): ADT /arm-io/uart, name "uart",
++	 * compatible "qcom,geni-uart", reg = <0x00A9C000 0x4000>.  The Apple
++	 * "boot-console" marker is accepted too if a board ADT adds it.
++	 */
++	entryP = NULL;
++	if (SecureDTFindEntry("boot-console", NULL, &entryP) != kSuccess) {
++		(void)SecureDTFindEntry("name", "uart", &entryP);
++	}
++	if (entryP != NULL) {
++		char const *qcom_geni_compat = NULL;
++		uint32_t reg_size = 0;
++
++		SecureDTGetProperty(entryP, "reg", (void const **)&reg_prop, &reg_size);
++		SecureDTGetProperty(entryP, "compatible", (void const **)&qcom_geni_compat, &prop_size);
++		if (reg_size >= 2 * sizeof(uintptr_t) && qcom_geni_compat != NULL &&
++		    !strcmp(qcom_geni_compat, "qcom,geni-uart")) {
++			qcom_geni_uart_base = ml_io_map(soc_base + *reg_prop, *(reg_prop + 1));
++			if (qcom_geni_uart_base != 0) {
++				register_serial_functions(&qcom_geni_uart_serial_functions);
++			}
++		}
++	}
++#endif /* QCOM_GENI_UART */
++
+ #ifdef VMAPPLE_UART
+ 	if (SecureDTFindEntry("name", "uart0", &entryP) == kSuccess) {
+ 		SecureDTGetProperty(entryP, "reg", (void const **)&reg_prop, &prop_size);
+diff --git a/pexpert/pexpert/arm/protos.h b/pexpert/pexpert/arm/protos.h
+index 404b50bd86e469561a38996e855741c0b8324e25..e26121ad455c79b77151290d9fa5903ed0fe1a92 100644
+--- a/pexpert/pexpert/arm/protos.h
++++ b/pexpert/pexpert/arm/protos.h
+@@ -47,7 +47,8 @@ typedef enum serial_device {
+ 	SERIAL_DOCKCHANNEL=0x2,
+ 	SERIAL_PI3_UART=0x4,
+ 	SERIAL_VMAPPLE_UART=0x8,
+-	SERIAL_DCC_UART=0x10
++	SERIAL_DCC_UART=0x10,
++	SERIAL_QCOM_GENI_UART=0x20
+ } serial_device_t;
+ 
+ kern_return_t serial_irq_enable(serial_device_t device);
+diff --git a/pexpert/pexpert/arm/qcom_geni_uart.h b/pexpert/pexpert/arm/qcom_geni_uart.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..02122e7c0c5bd16052fcc0c08ee9f5d8f401550a
+--- /dev/null
++++ b/pexpert/pexpert/arm/qcom_geni_uart.h
+@@ -0,0 +1,68 @@
++/*
++ * Qualcomm GENI/QUPv3 serial-engine (UART) register offsets used by the polled
++ * early-console backend in pexpert/arm/pe_serial.c.
++ *
++ * Project addition for the luming (Xiaomi Civi 5 Pro, SM8735) iOS 16 port.
++ * The GENI serial-engine layout matches the layout already proven in this
++ * project by drivers/NativeGeniSpi/GeniSpi.h (QUPv3 FIFO mode); that header and
++ * the Linux qcom-geni-se/qcom_geni_serial drivers were the reference for the
++ * offsets.  The luming UART window is 0x00A9C000 with size 0x4000 (SE7 of QUP
++ * wrapper 1), so every register used here stays below 0x4000.
++ */
++#ifndef _PEXPERT_ARM_QCOM_GENI_UART_H
++#define _PEXPERT_ARM_QCOM_GENI_UART_H
++
++/* GENI serial-engine registers (offset from the SE base; SE window is 0x4000). */
++#define QCOM_GENI_SE_GENI_STATUS                 0x40
++#define QCOM_GENI_SE_GENI_DMA_MODE_EN            0x258
++#define QCOM_GENI_SE_GENI_TX_FIFO                0x700   /* 0x700..0x77f, one 32-bit word per write */
++#define QCOM_GENI_SE_GENI_RX_FIFO                0x780   /* 0x780..0x7ff */
++#define QCOM_GENI_SE_GENI_TX_FIFO_STATUS         0x800
++#define QCOM_GENI_SE_GENI_RX_FIFO_STATUS         0x804
++#define QCOM_GENI_SE_GENI_TX_PACKING_CFG0        0x260
++#define QCOM_GENI_SE_GENI_TX_PACKING_CFG1        0x264
++#define QCOM_GENI_SE_GENI_HW_PARAM_0             0xe24
++
++/* GENI_STATUS */
++#define QCOM_GENI_STATUS_M_CMD_ACTIVE            (1u << 0)
++
++/* FIFO-mode selection: 0 = FIFO/PIO mode, 1 = DMA/GSI mode. */
++#define QCOM_GENI_DMA_MODE_ENABLED               (1u << 0)
++
++/*
++ * FIFO-status word-count fields, cross-checked against the stock luming
++ * msm_geni_serial.ko disassembly (agents/xnu-geni/work/geni-ko-evidence.txt):
++ * TX_FIFO_STATUS word count = bits 27:0 (vendor: and #0xfffffff), RX word
++ * count = bits 24:0 plus LAST/LAST_VALID bits 31/30:28 (vendor: and #0x1ffffff,
++ * ubfx #28,3, bit 31).  The backend derives "TX FIFO full" from the word count
++ * and the FIFO depth instead of relying on a vendor-uncertain full flag, so a
++ * gated or wedged SE reads as full and the bounded poll gives up instead of
++ * hanging the boot.
++ */
++#define QCOM_GENI_TX_FIFO_WC_MASK                0x0fffffffu
++#define QCOM_GENI_RX_FIFO_WC_MASK                0x01ffffffu
++
++/* GENI_HW_PARAM_0 TX-FIFO depth: 8 bits at bit 16 on QUPv3, 6 bits on older QUP. */
++#define QCOM_GENI_HW_PARAM0_TX_DEPTH_MASK_QUPV3  0x00ff0000u
++#define QCOM_GENI_HW_PARAM0_TX_DEPTH_MASK_QUPV2  0x003f0000u
++#define QCOM_GENI_HW_PARAM0_TX_DEPTH_SHIFT       16
++
++/* Plain MMIO reads are cheap; if the FIFO never drains, give up and drop output. */
++#define QCOM_GENI_TX_POLL_LIMIT                  1000000u
++
++/*
++ * TX packing config for one 8-bit character per 32-bit FIFO word, LSB first.
++ * Values produced by the same algorithm as this project's NativeGeniSpi
++ * config_packing() for geni_se_config_packing(se, bpw=8, pack_words=1,
++ * msb_to_lsb=false): one vector {start=0, direction=0, length=7, stop=1}.
++ * The vendor UART console port uses exactly that packing; a firmware tty setup
++ * can leave 4-characters-per-word packing instead.  Define
++ * QCOM_GENI_UART_PROGRAM_PACKING=0 to trust the bootloader configuration.
++ */
++#define QCOM_GENI_UART_TX_PACK_CFG0              0x0000000fu
++#define QCOM_GENI_UART_TX_PACK_CFG1              0x00000000u
++#ifndef QCOM_GENI_UART_PROGRAM_PACKING
++#define QCOM_GENI_UART_PROGRAM_PACKING           1
++#endif
++
++#endif /* _PEXPERT_ARM_QCOM_GENI_UART_H */
+diff --git a/pexpert/pexpert/arm64/BCM2837.h b/pexpert/pexpert/arm64/BCM2837.h
+index d9f0723244e5772153b0521b34b3475be35a56bc..480761892a6227ee4feeaab42afca878769bbedd 100644
+--- a/pexpert/pexpert/arm64/BCM2837.h
++++ b/pexpert/pexpert/arm64/BCM2837.h
+@@ -23,6 +23,15 @@
+ 
+ #define PI3_UART
+ 
++/*
++ * Qualcomm GENI/QUPv3 UART console backend (project addition for the luming
++ * SM8735 port; see agents/xnu-geni/REPORT-GENI.md).  The backend is polled,
++ * TX-first and assumes bootloader-initialized clocks/pins/baud; it registers
++ * only when the ADT has an /arm-io/uart node.  Apple's other serial backends
++ * are unchanged.
++ */
++#define QCOM_GENI_UART 1
++
+ #define PI3_BREAK                               asm volatile("brk #0");
+ 
+ #define BCM2837_GPFSEL0_V               (pi3_gpio_base_vaddr + 0x0)
