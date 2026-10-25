@@ -1,0 +1,188 @@
+diff --git a/GccUfs.h b/GccUfs.h
+index 5d11663a81c7caca9cd27173805eadecde74fc1d..1909db12d045f7dcbc10c0d68b2bb5b3b9731b2b 100644
+--- a/GccUfs.h
++++ b/GccUfs.h
+@@ -1,14 +1,30 @@
+ // SPDX-License-Identifier: BSD-2-Clause-Patent
+-// SM8550 GCC registers used by UFS, transcribed as facts from the public
+-// Linux gcc-sm8550.c clock driver. No write is performed by NativeUfs yet.
++// GCC registers used by UFS. The SM8550 table is transcribed as facts from the
++// public Linux gcc-sm8550.c clock driver; the SM8735 ("gcc-tuna") table lives in
++// GccUfsSm8735.h. No write is performed by NativeUfs yet.
++//
++// The SoC table is a build-time selection (REPORT-UFS-PLAN.md §5/P4):
++//   -DNATIVE_UFS_SM8735=1   luming (SM8735); the luming CI build script adds it.
++//   default                 SM8550, so the proven sheng target is unchanged.
+ #ifndef NATIVE_UFS_GCC_UFS_H
+ #define NATIVE_UFS_GCC_UFS_H
+ 
+-// Physical windows from the sheng board DT (clock-controller@100000, ufshc@1d84000).
++// Physical windows (same on both SoCs; UFS host from the board DT).
+ #define GCC_BASE                      0x00100000ULL
+ #define UFS_HC_BASE                   0x01d84000ULL
+ #define UFS_HC_SIZE                   0x3000ULL
+ 
++// GDSC/BCR bit facts, identical in the SM8550 and SM8735 clock drivers.
++#define GCC_UFS_GDSC_PWR_ON_BIT       0x80000000U  // GDSCR bit31
++#define GCC_UFS_BRANCH_ENABLE_BIT     0x1U         // CBCR bit0
++#define GCC_UFS_BRANCH_HALT_BIT       0x0U         // CBCR bit0 halt in some trees
++#define GCC_UFS_BRANCH_HWCG_BIT       0x2U         // CBCR bit1 hardware clock gating
++#define GCC_UFS_BRANCH_CLK_OFF_BIT    0x80000000U  // CBCR bit31 CLK_OFF
++
++#if defined(NATIVE_UFS_SM8735) && NATIVE_UFS_SM8735
++#include "GccUfsSm8735.h"
++#else  /* SM8550 (default, preserved behaviour) */
++
+ #define GCC_UFS_PHY_GDSCR             0x77004
+ #define GCC_UFS_MEM_PHY_GDSCR         0x9e000
+ 
+@@ -23,10 +39,14 @@
+ // bus_aggr_clk in the board DT: gcc_aggre_ufs_phy_axi_clk, halt/enable 0x770e4, HW clock gating bit1
+ #define GCC_AGGRE_UFS_PHY_AXI_ENABLE  0x770e4
+ 
+-#define GCC_UFS_BRANCH_ENABLE_BIT     0x1U
++// The SM8550 table has no RCG2 entries in this driver yet (read-only snapshot only).
++#define GCC_UFS_PHY_BCR               0x77000
++#define GCC_UFS_PHY_BCR_RESET_ID      19
++
++#endif /* NATIVE_UFS_SM8735 */
+ 
+-// gcc_ufs_phy_ahb_clk and gcc_aggre_ufs_phy_axi_clk set hwcg_bit=1 in gcc-sm8550.c, so CLK_OFF=1 on
+-// an idle branch is normal (hardware 2026-10-17 read ahb=80000003).
+-// The reset and RPMh/TCSR/QMP-PHY programming are not represented here: their
+-// semantics are not qualified and NativeUfs must not write them speculatively.
+-#endif
++// gcc_ufs_phy_ahb_clk and gcc_aggre_ufs_phy_axi_clk set hwcg_bit=1 in the clock drivers, so
++// CLK_OFF=1 on an idle branch is normal (hardware 2026-10-17 read ahb=80000003). The reset
++// and RPMh/TCSR/QMP-PHY programming are not represented here: their semantics are not
++// qualified and NativeUfs must not write them speculatively.
++#endif /* NATIVE_UFS_GCC_UFS_H */
+diff --git a/GccUfsSm8735.h b/GccUfsSm8735.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..234413b537a58f15f7b1e2a505e6db1897ee574e
+--- /dev/null
++++ b/GccUfsSm8735.h
+@@ -0,0 +1,42 @@
++// SPDX-License-Identifier: BSD-2-Clause-Patent
++// SM8735 (Qualcomm "gcc-tuna") GCC registers used by UFS. Transcribed as facts
++// from the public Linux gcc-tuna.c clock driver used as evidence in
++// REPORT-UFS-PLAN.md §6 (xiaomi-onyx-dev/android_kernel_xiaomi_sm8735,
++// lineage-23.2). No write is performed by NativeUfs; these offsets feed the
++// read-only stage-0 snapshot (and a future, separately reviewed power-up).
++//
++// Differences from the SM8550 table in GccUfs.h: 8 of the 9 UFS branch offsets
++// differ (AXI is the only identical one); the AGGR E branch (0x770f4) also
++// differs from SM8750 (0x770f0). GDSC and reset-BCR offsets are unchanged.
++#ifndef NATIVE_UFS_GCC_UFS_SM8735_H
++#define NATIVE_UFS_GCC_UFS_SM8735_H
++
++// GDSCs (physical offsets; the driver maps GCC_BASE + 0x77000 and GCC_BASE + 0x9e000):
++// gcc_ufs_phy_gdsc at 0x177004, gcc_ufs_mem_phy_gdsc at 0x19e000.
++#define GCC_UFS_PHY_GDSCR             0x77004
++#define GCC_UFS_MEM_PHY_GDSCR         0x9e000
++
++// UFS PHY branches (CBCR, halt_bit 0, enable bit 0; hwcg_bit 1 for AXI/AHB/UNIPRO/ICE/AUX/AGGRE).
++#define GCC_UFS_PHY_AXI_ENABLE        0x77018
++#define GCC_UFS_PHY_AHB_ENABLE        0x77028
++#define GCC_UFS_PHY_TX_SYMBOL0_ENABLE 0x7702c
++#define GCC_UFS_PHY_RX_SYMBOL0_ENABLE 0x77030
++#define GCC_UFS_PHY_UNIPRO_CORE_ENABLE 0x7706c
++#define GCC_UFS_PHY_ICE_CORE_ENABLE   0x7707c
++#define GCC_UFS_PHY_PHY_AUX_ENABLE    0x770bc
++#define GCC_UFS_PHY_RX_SYMBOL1_ENABLE 0x770d8
++// gcc_aggre_ufs_phy_axi_clk (bus_aggr_clk in the board DT), hwcg_bit 1.
++#define GCC_AGGRE_UFS_PHY_AXI_ENABLE  0x770f4
++
++// RCG2 command registers (source clocks; read-only in the stage-0 snapshot).
++#define GCC_UFS_PHY_AXI_CLK_SRC          0x77034
++#define GCC_UFS_PHY_ICE_CORE_CLK_SRC     0x7708c
++#define GCC_UFS_PHY_UNIPRO_CORE_CLK_SRC  0x770a4
++#define GCC_UFS_PHY_PHY_AUX_CLK_SRC      0x770c0
++
++// Reset: GCC_UFS_PHY_BCR at 0x77000, reset id 19 (0x13) in the board DT; not
++// deasserted by this driver yet.
++#define GCC_UFS_PHY_BCR               0x77000
++#define GCC_UFS_PHY_BCR_RESET_ID      19
++
++#endif /* NATIVE_UFS_GCC_UFS_SM8735_H */
+diff --git a/NativeUfs.cpp b/NativeUfs.cpp
+index 9e1f22fc6d871c0c127c2cc7a1a48d0578c9b6a2..639cf3d52ce2e73543ddfe257d04f20de3824f64 100644
+--- a/NativeUfs.cpp
++++ b/NativeUfs.cpp
+@@ -88,18 +88,42 @@ static void write32 (uintptr_t base, unsigned offset, uint32_t value)
+   *reinterpret_cast<volatile uint32_t *> (base + offset) = value;
+ }
+ 
+-static bool contains (const char *data, size_t length, const char *needle)
++// Whole-string compatible-list matching (REPORT-UFS-PLAN.md P3). The "compatible"
++// property is a list of NUL-separated strings (ADT) or one string; matching whole
++// entries means "qcom,ufshc" cannot accept an unrelated string and the luming ADT
++// values (qcom,sm8735-ufshc / qcom,ufshc) match exactly. Adapted from the SM8750
++// NativeUfs port's listContains.
++static bool listContains (const char *data, size_t length, const char *needle)
+ {
+   size_t wanted = 0;
+   while (needle[wanted]) {
+     wanted++;
+   }
+-  for (size_t at = 0; at + wanted <= length; at++) {
+-    size_t index = 0;
+-    while (index < wanted && data[at + index] == needle[index]) {
+-      index++;
++  size_t at = 0;
++  while (at < length) {
++    size_t end = at;
++    while (end < length && data[end]) {
++      end++;
+     }
+-    if (index == wanted) {
++    if (end - at == wanted && memcmp (data + at, needle, wanted) == 0) {
++      return true;
++    }
++    at = end + 1;
++  }
++  return false;
++}
++
++// Accepted UFS host-controller compatibles, most specific first. qcom,ufshc is what the
++// stock luming DT advertises and qcom,sm8735-ufshc is what the current luming ADT emits.
++static bool compatibleMatches (const char *text, size_t length, bool *sm8735)
++{
++  static const char *const accepted[] = { "qcom,sm8735-ufshc", "qcom,ufshc", "qcom,sm8550-ufshc" };
++  *sm8735 = false;
++  for (size_t index = 0; index < sizeof (accepted) / sizeof (accepted[0]); index++) {
++    if (listContains (text, length, accepted[index])) {
++      if (index == 0) {
++        *sm8735 = true;
++      }
+       return true;
+     }
+   }
+@@ -123,16 +147,25 @@ IOService *NativeUfs::probe (IOService *provider, SInt32 *score)
+   OSData *data = OSDynamicCast (OSData, property);
+   OSString *string = OSDynamicCast (OSString, property);
+   bool match = false;
++  bool sm8735 = false;
+   if (data) {
+     const char *text = static_cast<const char *> (data->getBytesNoCopy ());
+-    match = text && contains (text, data->getLength (), "qcom,sm8550-ufshc");
++    match = text && compatibleMatches (text, data->getLength (), &sm8735);
+   } else if (string) {
+     const char *text = string->getCStringNoCopy ();
+-    match = text && contains (text, string->getLength (), "qcom,sm8550-ufshc");
++    match = text && compatibleMatches (text, string->getLength (), &sm8735);
+   }
+   if (!match) {
+     return nullptr;
+   }
++  if (sm8735) {
++#if defined(NATIVE_UFS_SM8735) && NATIVE_UFS_SM8735
++    IOLog ("NativeUfs: matched qcom,sm8735-ufshc; using the SM8735/gcc-tuna GCC table\n");
++#else
++    IOLog ("NativeUfs: matched qcom,sm8735-ufshc but this build uses the SM8550 GCC table; "
++           "rebuild with -DNATIVE_UFS_SM8735=1\n");
++#endif
++  }
+   native_ufs_matched = 1;
+   if (score) {
+     *score = 1000;
