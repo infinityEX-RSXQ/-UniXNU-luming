@@ -189,7 +189,7 @@ def main():
                 text = text.replace(
                     'static bool hostBringUp (const char **why)\n{',
                     'static bool hostBringUp (const char **why)\n{\n'
-                    '  panic ("NATIVE_UFS hostBringUp entered");\n')
+                    '  for (;;) { __asm__ volatile ("wfe"); }\n')
                 ufs_source.write_text(text, encoding='utf-8')
             storage_headers = work / 'build/storage-abi/include/IOKit/storage'
             device_headers = DEVICE / 'include/IOStorageFamily'
