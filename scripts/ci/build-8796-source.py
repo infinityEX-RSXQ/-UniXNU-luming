@@ -187,9 +187,9 @@ def main():
                 text = ufs_source.read_text(encoding='utf-8')
                 text = text.replace('"qcom,sm8550-ufshc"', '"qcom,ufshc"')
                 text = text.replace(
-                    'bool NativeUfs::start (IOService *provider)\n{',
-                    'bool NativeUfs::start (IOService *provider)\n{\n'
-                    '  for (;;) { __asm__ volatile ("wfe"); }\n')
+                    'static bool hostBringUp (const char **why)\n{',
+                    'static bool hostBringUp (const char **why)\n{\n'
+                    '  panic ("NATIVE_UFS hostBringUp entered");\n')
                 ufs_source.write_text(text, encoding='utf-8')
             storage_headers = work / 'build/storage-abi/include/IOKit/storage'
             device_headers = DEVICE / 'include/IOStorageFamily'
