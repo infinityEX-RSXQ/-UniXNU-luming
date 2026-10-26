@@ -431,6 +431,28 @@ dd_map = '\tcreate_bootstrap_mapping x0,  x4,  x5, x1, x2, x6, x10, x11, x12, x1
 t15 = t15[:t15.index(dd_vp)] + dd_map + t15[t15.index(dd_vp) + len(dd_vp):]
 pss.write_text(t15)
 print('DD-EARLY-VIDEO-MAPPING-OK')
+# ---- DO: luming source-level kernel_bootstrap/halt diagnostics ----
+pst = base / 'osfmk/kern/startup.c'
+t16 = pst.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+if 'kernel_bootstrap: load_context returned' in t16:
+    raise SystemExit('DO already applied')
+kb_anchor = '\n\tload_context(thread);\n'
+if t16.count(kb_anchor) != 1:
+    print('DO-LOAD-CONTEXT-ANCHOR-COUNT', t16.count(kb_anchor))
+    raise SystemExit('DO load_context anchor missing')
+t16 = t16.replace(kb_anchor, '\n\tload_context(thread);\n\n#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* luming: load_context must not return; panic instead of continuing into halt/restart */\n\tpanic("kernel_bootstrap: load_context returned");\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n', 1)
+hac = t16.find('halt_all_cpus(')
+if hac < 0:
+    raise SystemExit('DO halt_all_cpus not found')
+seg = t16[hac:hac + 4000]
+halt_old = '\tPEHaltRestart(kPERestartCPU);\n'
+if seg.count(halt_old) < 1:
+    print('DO-HALT-ANCHOR-COUNT', seg.count(halt_old))
+    raise SystemExit('DO PEHaltRestart anchor in halt_all_cpus missing')
+seg2 = seg.replace(halt_old, '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* luming: do not reset; freeze here after the halt printf */\n\tfor (;;) {\n\t\t__asm__ volatile("wfe");\n\t}\n#else\n\tPEHaltRestart(kPERestartCPU);\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n', 1)
+t16 = t16[:hac] + seg2 + t16[hac + 4000:]
+pst.write_text(t16)
+print('DO-SOURCE-DIAGNOSTICS-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
