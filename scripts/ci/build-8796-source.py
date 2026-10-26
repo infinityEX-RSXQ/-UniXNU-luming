@@ -172,6 +172,31 @@ t4 = t4.replace(old6, '\t\t\t\tbcopy(prop, &gPlatformMemoryID, size);\n\t\t\t}\n
 ppi.write_text(t4)
 print('CF-PE-INIT-DEFAULTS-OK')
 print('CF-OPTIONAL-DT-BLOCKS-SKIPPED-OK')
+# ---- CG: skip arm_init DEBUG DT blocks on luming (minimal UEFI DT) ----
+pai = base / 'osfmk/arm/arm_init.c'
+t7 = pai.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+g1_old = '#if (DEVELOPMENT || DEBUG)\n\tunsigned long const *platform_stall_ptr = NULL;'
+if t7.count(g1_old) != 1:
+    print('CG-STALL-BLOCK-ANCHOR-MISSING', t7.count(g1_old))
+    raise SystemExit('arm_init DEBUG stall block anchor missing')
+t7 = t7.replace(g1_old, '#if (DEVELOPMENT || DEBUG) && defined(APPLE_ARM64_ARCH_FAMILY)\n\tunsigned long const *platform_stall_ptr = NULL;', 1)
+g2a_old = '\tunsigned long const *dram_base;\n\tunsigned long const *dram_size;\n\n\tif (SecureDTLookupEntry(NULL, "/chosen", &chosen) != kSuccess) {\n'
+if t7.count(g2a_old) != 1:
+    print('CG-DRAM-BLOCK-ANCHOR-MISSING', t7.count(g2a_old))
+    raise SystemExit('arm_init dram DT block anchor missing')
+t7 = t7.replace(g2a_old, '\tunsigned long const *dram_base;\n\tunsigned long const *dram_size;\n\n#if defined(APPLE_ARM64_ARCH_FAMILY)\n\tif (SecureDTLookupEntry(NULL, "/chosen", &chosen) != kSuccess) {\n', 1)
+g2b_old = '\tgDramBase = *dram_base;\n\tgDramSize = *dram_size;\n'
+if t7.count(g2b_old) != 1:
+    print('CG-DRAM-END-ANCHOR-MISSING', t7.count(g2b_old))
+    raise SystemExit('arm_init dram end anchor missing')
+t7 = t7.replace(g2b_old, ('\tgDramBase = *dram_base;\n\tgDramSize = *dram_size;\n'
+    '#else /* luming: minimal UEFI DT - DRAM range from boot args, skip /chosen lookups */\n'
+    '\t(void)dram_base;\n\t(void)dram_size;\n'
+    '\tgDramBase = (vm_offset_t)args->physBase;\n'
+    '\tgDramSize = (vm_offset_t)args->memSize;\n#endif\n'), 1)
+pai.write_text(t7)
+print('CG-ARM-INIT-DEBUG-DT-SKIPPED-OK')
+print('CG-DRAM-FROM-BOOTARGS-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
