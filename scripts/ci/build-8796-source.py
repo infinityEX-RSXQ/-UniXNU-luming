@@ -46,7 +46,36 @@ def capture_kernel_make(script):
                  'Path(sys.argv[1]).write_text(json.dumps(sys.argv[2:], indent=2)+"\\n")\' '
                  '"$ROOT/reports/kernel-make-command.json" "${NUWA_KERNEL_MAKE[@]}"\n')
     captured += '"${NUWA_KERNEL_MAKE[@]}"'
-    return script[:start] + captured + script[end:]
+    injection = r"""
+python3 - <<'PY'
+import pathlib
+p = pathlib.Path('.cache/xnu-work/osfmk/arm64/start.s')
+t = p.read_text()
+a = 'LEXT(start_first_cpu)\n\n\t// Unlock the core for debugging'
+assert t.count(a) == 1, ('entry anchor', t.count(a))
+t = t.replace(a, ('LEXT(start_first_cpu)\n\n'
+    '\t/* luming: UEFI/DarwinBoot may hand off with MMU enabled; start.s assumes MMU is off */\n'
+    '\tmov\t\tx15, x0\n'
+    '\tmrs\t\tx16, SCTLR_EL1\n'
+    '\tmov\t\tx17, #1\n'
+    '\tbic\t\tx16, x16, x17\n'
+    '\tmsr\t\tSCTLR_EL1, x16\n'
+    '\tisb\t\tsy\n'
+    '\tmov\t\tx0, x15\n\n'
+    '\t// Unlock the core for debugging'), 1)
+b = '#if defined(BCM2837)\n\t// Setup timer interrupt routing'
+assert t.count(b) == 1, ('bcm anchor', t.count(b))
+t = t.replace(b, '#if defined(BCM2837) && defined(APPLE_ARM64_ARCH_FAMILY)\n\t// Setup timer interrupt routing', 1)
+c = ('#if !VMAPPLE\n\tMOV64   x1, SCTLR_EL1_DEFAULT\n\tcmp\t\tx0, x1\n\tbne\t\t.\n'
+     '#endif /* !VMAPPLE */')
+assert t.count(c) == 1, ('sctlr anchor', t.count(c))
+t = t.replace(c, ('#if !VMAPPLE && defined(APPLE_ARM64_ARCH_FAMILY)\n\tMOV64   x1, SCTLR_EL1_DEFAULT\n'
+     '\tcmp\t\tx0, x1\n\tbne\t\t.\n#endif /* !VMAPPLE && APPLE_ARM64_ARCH_FAMILY */'), 1)
+p.write_text(t)
+print('LUMING-START-FIX-APPLIED')
+PY
+"""
+    return script[:start] + injection + captured + script[end:]
 
 
 def inputs(base, with_geni=False):
@@ -96,10 +125,6 @@ def inputs(base, with_geni=False):
     if not donor_bridge.is_file():
         raise ValueError('Missing reviewed real VFS donor bridge')
     patches.append(donor_bridge)
-    luming_patch = DEVICE / 'patches/xnu-8796-luming' / '0001-luming-start-mmu-off-bcm-sctlr.patch'
-    if not luming_patch.is_file():
-        raise ValueError('Missing luming start.s MMU-off/BCM/SCTLR patch')
-    patches.append(luming_patch)
     if with_geni:
         geni_patch = DEVICE / 'patches/xnu-8796-geni' / GENI_PATCH_NAME
         if not geni_patch.is_file():
