@@ -436,22 +436,41 @@ pst = base / 'osfmk/kern/startup.c'
 t16 = pst.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
 if 'kernel_bootstrap: load_context returned' in t16:
     raise SystemExit('DO already applied')
-kb_anchor = '\n\tload_context(thread);\n'
-if t16.count(kb_anchor) != 1:
-    print('DO-LOAD-CONTEXT-ANCHOR-COUNT', t16.count(kb_anchor))
-    raise SystemExit('DO load_context anchor missing')
-t16 = t16.replace(kb_anchor, '\n\tload_context(thread);\n\n#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* luming: load_context must not return; panic instead of continuing into halt/restart */\n\tpanic("kernel_bootstrap: load_context returned");\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n', 1)
-hac = t16.find('halt_all_cpus(')
-if hac < 0:
-    raise SystemExit('DO halt_all_cpus not found')
-seg = t16[hac:hac + 4000]
-halt_old = '\tPEHaltRestart(kPERestartCPU);\n'
-if seg.count(halt_old) < 1:
-    print('DO-HALT-ANCHOR-COUNT', seg.count(halt_old))
-    raise SystemExit('DO PEHaltRestart anchor in halt_all_cpus missing')
-seg2 = seg.replace(halt_old, '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* luming: do not reset; freeze here after the halt printf */\n\tfor (;;) {\n\t\t__asm__ volatile("wfe");\n\t}\n#else\n\tPEHaltRestart(kPERestartCPU);\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n', 1)
-t16 = t16[:hac] + seg2 + t16[hac + 4000:]
+kb = t16.find('kernel_bootstrap(')
+if kb < 0:
+    raise SystemExit('DO kernel_bootstrap not found')
+rel = t16[kb:].find('\n\tload_context(thread);\n')
+if rel < 0:
+    raise SystemExit('DO load_context anchor not found after kernel_bootstrap')
+pos = kb + rel
+old = '\n\tload_context(thread);\n'
+ins = '\n\tload_context(thread);\n\n#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* luming: load_context must not return; panic instead of continuing into halt/restart */\n\tpanic("kernel_bootstrap: load_context returned");\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n'
+t16 = t16[:pos] + ins + t16[pos + len(old):]
 pst.write_text(t16)
+halt_file = None
+for cand in ('osfmk/kern/startup.c', 'osfmk/arm64/machine_routines.c', 'osfmk/kern/sched_prim.c'):
+    fp = base / cand
+    if not fp.is_file():
+        continue
+    tc = fp.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+    h = tc.find('halt_all_cpus(')
+    if h >= 0 and tc[h:h+6000].count('PEHaltRestart(kPERestartCPU);') >= 1:
+        halt_file = (fp, tc, h)
+        break
+if halt_file is None:
+    print('DO-HALT-PEHALTRESTART-NOT-FOUND')
+else:
+    fp, tc, h = halt_file
+    seg = tc[h:h+6000]
+    oldh = '\tPEHaltRestart(kPERestartCPU);\n'
+    newh = ('#if !defined(APPLE_ARM64_ARCH_FAMILY)\n'
+            '\t/* luming: do not reset; freeze here after the halt printf */\n'
+            '\tfor (;;) {\n\t\t__asm__ volatile("wfe");\n\t}\n'
+            '#else\n\tPEHaltRestart(kPERestartCPU);\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n')
+    seg2 = seg.replace(oldh, newh, 1)
+    tc = tc[:h] + seg2 + tc[h+6000:]
+    fp.write_text(tc)
+    print('DO-HALT-FREEZE-OK', fp.name)
 print('DO-SOURCE-DIAGNOSTICS-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
