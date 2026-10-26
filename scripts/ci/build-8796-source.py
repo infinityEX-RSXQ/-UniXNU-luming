@@ -229,16 +229,26 @@ ch1_old = (chr(9) + 'if (pe_arm_get_soc_base_phys() == 0) {\n'
 if t8.count(ch1_old) != 1:
     print('CH1-ANCHOR-MISSING', t8.count(ch1_old))
     raise SystemExit('pe_identify_machine CD block anchor missing')
-ch1_new = (chr(9) + 'if (pe_arm_get_soc_base_phys() == 0) {\n'
-    + chr(9)*2 + '/* luming: no Apple soc-base under UEFI boot; minimal UEFI DT - no SecureDT calls, use defaults */\n'
-    + chr(9)*2 + 'bzero((void *)&gPEClockFrequencyInfo, sizeof(clock_frequency_info_t));\n'
-    + chr(9)*2 + 'gPEClockFrequencyInfo.timebase_frequency_hz = 24000000;\n'
-    + chr(9)*2 + 'gPEClockFrequencyInfo.bus_clock_rate_hz = 100000000;\n'
-    + chr(9)*2 + 'gPEClockFrequencyInfo.cpu_clock_rate_hz = 400000000;\n'
-    + chr(9)*2 + 'gPEClockFrequencyInfo.dec_clock_rate_hz = 24000000;\n'
+ch1_new = (chr(9) + '/* luming: initialize clock defaults before any arm-io/soc-base dependency */\n'
+    + chr(9) + 'bzero((void *)&gPEClockFrequencyInfo, sizeof(clock_frequency_info_t));\n'
+    + chr(9) + 'gPEClockFrequencyInfo.timebase_frequency_hz = 24000000;\n'
+    + chr(9) + 'gPEClockFrequencyInfo.bus_clock_rate_hz = 100000000;\n'
+    + chr(9) + 'gPEClockFrequencyInfo.cpu_clock_rate_hz = 400000000;\n'
+    + chr(9) + 'gPEClockFrequencyInfo.dec_clock_rate_hz = 24000000;\n'
+    + '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n'
+    + chr(9) + '/* luming: minimal UEFI DT - no SecureDT parsing (avoids hangs), defaults only */\n'
+    + chr(9) + 'return;\n'
+    + '#else\n'
+    + chr(9) + 'if (pe_arm_get_soc_base_phys() == 0) {\n'
     + chr(9)*2 + 'return;\n'
     + chr(9) + '}\n')
 t8 = t8.replace(ch1_old, ch1_new, 1)
+ch1_end_old = ('\tgPEClockFrequencyInfo.bus_to_dec_rate_den =\n'
+               '\t    gPEClockFrequencyInfo.bus_clock_rate_hz / gPEClockFrequencyInfo.dec_clock_rate_hz;\n}\n')
+if t8.count(ch1_end_old) != 1:
+    print('CH1-END-ANCHOR-MISSING', t8.count(ch1_end_old))
+    raise SystemExit('pe_identify_machine end anchor missing')
+t8 = t8.replace(ch1_end_old, ch1_end_old.replace('}\n', '#endif /* APPLE_ARM64_ARCH_FAMILY: luming early-returns above */\n}\n'), 1)
 pim2.write_text(t8)
 print('CH1-NO-DT-IN-PE-IDENTIFY-OK')
 # CH2: pe_init_debug root/target-is-fpga DT lookup: Apple only
