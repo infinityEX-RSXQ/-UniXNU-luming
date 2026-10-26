@@ -271,6 +271,68 @@ t9 = t9.replace(ch2_old, ch2_new, 1)
 pgen.write_text(t9)
 print('CH2-PE-INIT-DEBUG-NO-DT-OK')
 print('CH-LUMING-EARLY-DT-FREE-DONE')
+# ---- CJ: luming ml_parse_cpu_topology single boot CPU topology (no SecureDT) ----
+pmr2 = base / 'osfmk/arm64/machine_routines.c'
+t10 = pmr2.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+cj_start = 'void\nml_parse_cpu_topology(void)\n{\n\tDTEntry entry, child __unused;'
+if t10.count(cj_start) != 1:
+    print('CJ-START-ANCHOR-MISSING', t10.count(cj_start))
+    raise SystemExit('ml_parse_cpu_topology start anchor missing')
+cj_luming = ('#if !defined(APPLE_ARM64_ARCH_FAMILY)\n'
+    '\t/* luming: minimal UEFI DT - single boot CPU topology from MPIDR, skip all SecureDT /cpus parsing */\n'
+    '\tuint64_t mpidr = __builtin_arm_rsr64("MPIDR_EL1");\n'
+    '\tml_topology_cpu_t *cpu = &topology_info.cpus[0];\n'
+    '\tml_topology_cluster_t *cluster = &topology_info.clusters[0];\n'
+    '\n'
+    '\tfor (int i = 0; i <= MAX_CPU_CLUSTER_PHY_ID; i++) {\n'
+    '\t\tcluster_offsets[i] = -1;\n'
+    '\t}\n'
+    '\tcluster_offsets[0] = 0;\n'
+    '\ttopology_info.version = CPU_TOPOLOGY_VERSION;\n'
+    '\ttopology_info.num_cpus = 1;\n'
+    '\ttopology_info.max_cpu_id = 0;\n'
+    '\ttopology_info.num_clusters = 1;\n'
+    '\ttopology_info.max_cluster_id = 0;\n'
+    '\ttopology_info.max_die_id = 0;\n'
+    '\ttopology_info.chip_revision = 0;\n'
+    '\ttopology_info.cluster_types = (1U << CLUSTER_TYPE_SMP);\n'
+    '\ttopology_info.cluster_type_num_cpus[CLUSTER_TYPE_SMP] = 1;\n'
+    '\ttopology_info.cluster_type_num_clusters[CLUSTER_TYPE_SMP] = 1;\n'
+    '\n'
+    '\tcpu->cpu_id = 0;\n'
+    '\tcpu->phys_id = (uint32_t)(mpidr & (MPIDR_AFF1_MASK | MPIDR_AFF0_MASK));\n'
+    '\tcpu->cluster_id = 0;\n'
+    '\tcpu->die_id = 0;\n'
+    '\tcpu->cluster_type = CLUSTER_TYPE_SMP;\n'
+    '\tcpu->die_cluster_id = MPIDR_CLUSTER_ID(cpu->phys_id);\n'
+    '\tcpu->cluster_core_id = MPIDR_CPU_ID(cpu->phys_id);\n'
+    '\n'
+    '\tcluster->cluster_id = 0;\n'
+    '\tcluster->cluster_type = CLUSTER_TYPE_SMP;\n'
+    '\tcluster->first_cpu_id = 0;\n'
+    '\tcluster->num_cpus = 1;\n'
+    '\tcluster->cpu_mask = 1ULL;\n'
+    '\n'
+    '\ttopology_info.boot_cpu = cpu;\n'
+    '\ttopology_info.boot_cluster = cluster;\n'
+    '\n'
+    '\tuint64_t cpuid = cpu->cpu_id;\n'
+    '\t__builtin_arm_wsr64("TPIDR_EL0", cpuid & MACHDEP_TPIDR_CPUNUM_MASK);\n'
+    '\tassert((cpuid & MACHDEP_TPIDR_CPUNUM_MASK) == cpuid);\n'
+    '\t__builtin_arm_wsr64("TPIDRRO_EL0", 0);\n'
+    '\treturn;\n'
+    '#else\n'
+    '\tDTEntry entry, child __unused;')
+t10 = t10.replace(cj_start, 'void\nml_parse_cpu_topology(void)\n{\n' + cj_luming, 1)
+cj_end = ('\t__builtin_arm_wsr64("TPIDR_EL0", cpuid & MACHDEP_TPIDR_CPUNUM_MASK);\n'
+          '\tassert((cpuid & MACHDEP_TPIDR_CPUNUM_MASK) == cpuid);\n'
+          '\t__builtin_arm_wsr64("TPIDRRO_EL0", 0);\n}\n')
+if t10.count(cj_end) != 1:
+    print('CJ-END-ANCHOR-MISSING', t10.count(cj_end))
+    raise SystemExit('ml_parse_cpu_topology end anchor missing')
+t10 = t10.replace(cj_end, cj_end.replace('}\n', '#endif /* !APPLE_ARM64_ARCH_FAMILY: luming single-CPU topology above */\n}\n'), 1)
+pmr2.write_text(t10)
+print('CJ-ML-PARSE-LUMING-TOPOLOGY-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
