@@ -197,6 +197,70 @@ t7 = t7.replace(g2b_old, ('\tgDramBase = *dram_base;\n\tgDramSize = *dram_size;\
 pai.write_text(t7)
 print('CG-ARM-INIT-DEBUG-DT-SKIPPED-OK')
 print('CG-DRAM-FROM-BOOTARGS-OK')
+# ---- CH: remove all SecureDT calls from the luming early PE path ----
+# CH1: pe_identify_machine no-soc-base branch: defaults only (no /cpus DT lookups)
+pim2 = base / 'pexpert/arm/pe_identify_machine.c'
+t8 = pim2.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+ch1_old = (chr(9) + 'if (pe_arm_get_soc_base_phys() == 0) {\n'
+    + chr(9)*2 + '/* luming: no Apple soc-base under UEFI boot; keep clock defaults and read /cpus timebase */\n'
+    + chr(9)*2 + 'bzero((void *)&gPEClockFrequencyInfo, sizeof(clock_frequency_info_t));\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.timebase_frequency_hz = 24000000;\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.bus_clock_rate_hz = 100000000;\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.cpu_clock_rate_hz = 400000000;\n'
+    + chr(9)*2 + 'DTEntry cpus_l = NULL, cpu_l = NULL;\n'
+    + chr(9)*2 + 'OpaqueDTEntryIterator iter_l;\n'
+    + chr(9)*2 + 'if (SecureDTLookupEntry(NULL, "/cpus", &cpus_l) == kSuccess &&\n'
+    + chr(9)*2 + '    SecureDTInitEntryIterator(cpus_l, &iter_l) == kSuccess) {\n'
+    + chr(9)*3 + 'while (SecureDTIterateEntries(&iter_l, &cpu_l) == kSuccess) {\n'
+    + chr(9)*4 + 'void const *value_l = NULL;\n'
+    + chr(9)*4 + 'unsigned int size_l = 0;\n'
+    + chr(9)*4 + 'if (SecureDTGetProperty(cpu_l, "timebase-frequency", &value_l, &size_l) == kSuccess && value_l) {\n'
+    + chr(9)*5 + 'uint64_t tb_l = (size_l == 8) ? *(uint64_t const *)value_l : *(uint32_t const *)value_l;\n'
+    + chr(9)*5 + 'if (tb_l != 0) {\n'
+    + chr(9)*6 + 'gPEClockFrequencyInfo.timebase_frequency_hz = tb_l;\n'
+    + chr(9)*5 + '}\n'
+    + chr(9)*5 + 'break;\n'
+    + chr(9)*4 + '}\n'
+    + chr(9)*3 + '}\n'
+    + chr(9)*2 + '}\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.dec_clock_rate_hz = gPEClockFrequencyInfo.timebase_frequency_hz;\n'
+    + chr(9)*2 + 'return;\n'
+    + chr(9) + '}\n')
+if t8.count(ch1_old) != 1:
+    print('CH1-ANCHOR-MISSING', t8.count(ch1_old))
+    raise SystemExit('pe_identify_machine CD block anchor missing')
+ch1_new = (chr(9) + 'if (pe_arm_get_soc_base_phys() == 0) {\n'
+    + chr(9)*2 + '/* luming: no Apple soc-base under UEFI boot; minimal UEFI DT - no SecureDT calls, use defaults */\n'
+    + chr(9)*2 + 'bzero((void *)&gPEClockFrequencyInfo, sizeof(clock_frequency_info_t));\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.timebase_frequency_hz = 24000000;\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.bus_clock_rate_hz = 100000000;\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.cpu_clock_rate_hz = 400000000;\n'
+    + chr(9)*2 + 'gPEClockFrequencyInfo.dec_clock_rate_hz = 24000000;\n'
+    + chr(9)*2 + 'return;\n'
+    + chr(9) + '}\n')
+t8 = t8.replace(ch1_old, ch1_new, 1)
+pim2.write_text(t8)
+print('CH1-NO-DT-IN-PE-IDENTIFY-OK')
+# CH2: pe_init_debug root/target-is-fpga DT lookup: Apple only
+pgen = base / 'pexpert/gen/pe_gen.c'
+t9 = pgen.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+ch2_old = ('\t} else {\n\t\tDTEntry         root;\n\t\tif (SecureDTLookupEntry(NULL, "/", &root) == kSuccess) {\n'
+           '\t\t\tvoid const *prop = NULL;\n\t\t\tuint32_t size = 0;\n'
+           '\t\t\tif (SecureDTGetProperty(root, "target-is-fpga", &prop, &size) == kSuccess) {\n'
+           '\t\t\t\tdebug_cpu_performance_degradation_factor = 10;\n\t\t\t}\n\t\t}\n\t}\n')
+if t9.count(ch2_old) != 1:
+    print('CH2-ANCHOR-MISSING', t9.count(ch2_old))
+    raise SystemExit('pe_init_debug DT block anchor missing')
+ch2_new = ('\t} else {\n#if defined(APPLE_ARM64_ARCH_FAMILY)\n\t\tDTEntry         root;\n\t\tif (SecureDTLookupEntry(NULL, "/", &root) == kSuccess) {\n'
+           '\t\t\tvoid const *prop = NULL;\n\t\t\tuint32_t size = 0;\n'
+           '\t\t\tif (SecureDTGetProperty(root, "target-is-fpga", &prop, &size) == kSuccess) {\n'
+           '\t\t\t\tdebug_cpu_performance_degradation_factor = 10;\n\t\t\t}\n\t\t}\n'
+           '#else /* luming: minimal UEFI DT - skip root/target-is-fpga lookup */\n'
+           '\t\tdebug_cpu_performance_degradation_factor = 1;\n#endif\n\t}\n')
+t9 = t9.replace(ch2_old, ch2_new, 1)
+pgen.write_text(t9)
+print('CH2-PE-INIT-DEBUG-NO-DT-OK')
+print('CH-LUMING-EARLY-DT-FREE-DONE')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
