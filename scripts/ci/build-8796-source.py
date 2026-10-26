@@ -96,6 +96,10 @@ def inputs(base, with_geni=False):
     if not donor_bridge.is_file():
         raise ValueError('Missing reviewed real VFS donor bridge')
     patches.append(donor_bridge)
+    luming_patch = DEVICE / 'patches/xnu-8796-luming' / '0001-luming-start-mmu-off-bcm-sctlr.patch'
+    if not luming_patch.is_file():
+        raise ValueError('Missing luming start.s MMU-off/BCM/SCTLR patch')
+    patches.append(luming_patch)
     if with_geni:
         geni_patch = DEVICE / 'patches/xnu-8796-geni' / GENI_PATCH_NAME
         if not geni_patch.is_file():
