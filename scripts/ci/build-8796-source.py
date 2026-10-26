@@ -145,6 +145,33 @@ new3 = ('\tticks_per_sec = gPEClockFrequencyInfo.timebase_frequency_hz;\n'
 t3 = t3.replace(old3, new3, 1)
 pm.write_text(t3)
 print('CD-WFE-GUARD-OK')
+# ---- CF: PE_init_platform identity defaults + skip optional iBoot DT blocks (luming) ----
+ppi = base / 'pexpert/arm/pe_init.c'
+t4 = ppi.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+old4 = '\tboot_args      *boot_args_ptr = (boot_args *) args;\n\n\tif (PE_state.initialized == FALSE) {\n'
+if t4.count(old4) != 1:
+    print('CF-PE-INIT-ANCHOR-MISSING', t4.count(old4))
+    raise SystemExit('PE_init_platform anchor missing')
+cf_defaults = ('\t/* luming: default PE identity for the minimal UEFI/DarwinBoot device tree */\n'
+               '\tstrlcpy(gTargetTypeBuffer, "luming", sizeof(gTargetTypeBuffer));\n'
+               '\tstrlcpy(gModelTypeBuffer, "Xiaomi Civi 5 Pro", sizeof(gModelTypeBuffer));\n'
+               '\tstrlcpy(iBoot_version, "UEFI-DarwinBoot", sizeof(iBoot_version));\n'
+               '\tmemset(gPlatformECID, 0, sizeof(gPlatformECID));\n'
+               '\tgPlatformMemoryID = 0;\n')
+t4 = t4.replace(old4, old4.replace('\n\tif (PE_state.initialized == FALSE) {\n', '\n' + cf_defaults + '\n\tif (PE_state.initialized == FALSE) {\n'), 1)
+old5 = '\tif (!vm_initialized) {\n\t\tif (kSuccess == (SecureDTFindEntry("name", "device-tree", &entry))) {\n'
+if t4.count(old5) != 1:
+    print('CF-DTBLOCK-ANCHOR-MISSING', t4.count(old5))
+    raise SystemExit('PE_init_platform DT block anchor missing')
+t4 = t4.replace(old5, '\tif (!vm_initialized) {\n#if defined(APPLE_ARM64_ARCH_FAMILY)\n\t\tif (kSuccess == (SecureDTFindEntry("name", "device-tree", &entry))) {\n', 1)
+old6 = '\t\t\t\tbcopy(prop, &gPlatformMemoryID, size);\n\t\t\t}\n\t\t}\n\t\tpe_init_debug();\n'
+if t4.count(old6) != 1:
+    print('CF-CHOSEN-END-ANCHOR-MISSING', t4.count(old6))
+    raise SystemExit('PE_init_platform /chosen end anchor missing')
+t4 = t4.replace(old6, '\t\t\t\tbcopy(prop, &gPlatformMemoryID, size);\n\t\t\t}\n\t\t}\n#endif /* APPLE_ARM64_ARCH_FAMILY: skip optional iBoot identity DT property blocks on luming */\n\t\tpe_init_debug();\n', 1)
+ppi.write_text(t4)
+print('CF-PE-INIT-DEFAULTS-OK')
+print('CF-OPTIONAL-DT-BLOCKS-SKIPPED-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
