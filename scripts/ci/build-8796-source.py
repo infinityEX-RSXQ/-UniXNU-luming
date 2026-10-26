@@ -88,6 +88,64 @@ else:
     print('SCTLR-ANCHOR-MISSING')
 p.write_text(t)
 print('LUMING-START-FIX-DONE')
+# ---- CD: PE clock defaults when Apple soc-base is absent (UEFI/DarwinBoot) ----
+base = pathlib.Path('.cache/xnu-work')
+pp = base / 'pexpert/arm/pe_identify_machine.c'
+t2 = pp.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+old2 = '\tif (pe_arm_get_soc_base_phys() == 0) {\n\t\treturn;\n\t}\n'
+if t2.count(old2) != 1:
+    print('CD-PE-ANCHOR-MISSING', t2.count(old2))
+    raise SystemExit('pe_identify_machine anchor missing')
+new2 = ('\tif (pe_arm_get_soc_base_phys() == 0) {\n'
+        '\t\t/* luming: no Apple soc-base under UEFI boot; keep clock defaults and read /cpus timebase */\n'
+        '\t\tbzero((void *)&gPEClockFrequencyInfo, sizeof(clock_frequency_info_t));\n'
+        '\t\tgPEClockFrequencyInfo.timebase_frequency_hz = 24000000;\n'
+        '\t\tgPEClockFrequencyInfo.bus_clock_rate_hz = 100000000;\n'
+        '\t\tgPEClockFrequencyInfo.cpu_clock_rate_hz = 400000000;\n'
+        '\t\tDTEntry cpus_l = NULL, cpu_l = NULL;\n'
+        '\t\tOpaqueDTEntryIterator iter_l;\n'
+        '\t\tif (SecureDTLookupEntry(NULL, "/cpus", &cpus_l) == kSuccess &&\n'
+        '\t\t    SecureDTInitEntryIterator(cpus_l, &iter_l) == kSuccess) {\n'
+        '\t\t\twhile (SecureDTIterateEntries(&iter_l, &cpu_l) == kSuccess) {\n'
+        '\t\t\t\tvoid const *value_l = NULL;\n'
+        '\t\t\t\tunsigned int size_l = 0;\n'
+        '\t\t\t\tif (SecureDTGetProperty(cpu_l, "timebase-frequency", &value_l, &size_l) == kSuccess && value_l) {\n'
+        '\t\t\t\t\tuint64_t tb_l = (size_l == 8) ? *(uint64_t const *)value_l : *(uint32_t const *)value_l;\n'
+        '\t\t\t\t\tif (tb_l != 0) {\n'
+        '\t\t\t\t\t\tgPEClockFrequencyInfo.timebase_frequency_hz = tb_l;\n'
+        '\t\t\t\t\t}\n'
+        '\t\t\t\t\tbreak;\n'
+        '\t\t\t\t}\n'
+        '\t\t\t}\n'
+        '\t\t}\n'
+        '\t\tgPEClockFrequencyInfo.dec_clock_rate_hz = gPEClockFrequencyInfo.timebase_frequency_hz;\n'
+        '\t\treturn;\n'
+        '\t}\n')
+t2 = t2.replace(old2, new2, 1)
+pp.write_text(t2)
+print('CD-PE-CLOCK-DEFAULTS-OK')
+# ---- CD: guard wfe_timeout_configure when timebase/ticks are zero ----
+pm = base / 'osfmk/arm64/machine_routines.c'
+t3 = pm.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+old3 = '\tticks_per_sec = gPEClockFrequencyInfo.timebase_frequency_hz;\n\tticks_per_event = ticks_per_sec / events_per_sec;\n'
+if t3.count(old3) != 1:
+    print('CD-WFE-ANCHOR-MISSING', t3.count(old3))
+    raise SystemExit('wfe_timeout_configure anchor missing')
+new3 = ('\tticks_per_sec = gPEClockFrequencyInfo.timebase_frequency_hz;\n'
+        '\tif (ticks_per_sec == 0) {\n'
+        '\t\t/* luming: timebase unknown; disable WFE event stream instead of UBSAN underflow */\n'
+        '\t\tarm64_eventi = 0;\n'
+        '\t\treturn;\n'
+        '\t}\n'
+        '\tticks_per_event = ticks_per_sec / events_per_sec;\n'
+        '\tif (ticks_per_event == 0) {\n'
+        '\t\tarm64_eventi = 0;\n'
+        '\t\treturn;\n'
+        '\t}\n')
+t3 = t3.replace(old3, new3, 1)
+pm.write_text(t3)
+print('CD-WFE-GUARD-OK')
+print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
     return script[:start] + injection + captured + script[end:]
