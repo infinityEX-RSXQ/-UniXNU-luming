@@ -416,6 +416,21 @@ cx_new = ('#define MARK_AS_FIXUP_TEXT\n\n'
 t14 = t14.replace(cx_old, cx_new, 1)
 psk.write_text(t14)
 print('CX-LATE-CONST-WRITABLE-OK')
+# ---- DD: luming early video/MMIO identity mapping in start.s bootstrap tables ----
+pss = base / 'osfmk/arm64/start.s'
+t15 = pss.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+dd_anchor = '/*\n *  arg0 - virtual start address\n *  arg1 - physical start address\n'
+if t15.count(dd_anchor) != 1:
+    raise SystemExit('DD start.s macro anchor missing')
+dev_macros = '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n/* DD (luming): Device-nGnRnE bootstrap mapping helpers for the video/MMIO window. */\n.macro create_l2_block_entries_dev\n\tand\t\t$4,\t$0, #(ARM_TT_L2_INDEX_MASK)\n\tlsr\t\t$4, $4, #(ARM_TTE_BLOCK_L2_SHIFT)\n\tlsl\t\t$4, $4, #(TTE_SHIFT)\n\tadd\t\t$4, $2, $4\n\tmov\t\t$5, #(ARM_TTE_VALID | ARM_TTE_BLOCK_AF | ARM_TTE_BLOCK_ATTRINDX(CACHE_ATTRINDX_DISABLE))\n\tand\t\t$6, $1, #(ARM_TTE_BLOCK_L2_MASK)\n\torr\t\t$6, $5, $6\n\tmov\t\t$5, $3\n\tmov\t\t$7, #(ARM_TT_L2_SIZE)\n1:\n\tstr\t\t$6, [$4], #(1 << TTE_SHIFT)\n\tadd\t\t$6, $6, $7\n\tsubs\t$5, $5, #1\n\tb.ne\t1b\n.endmacro\n.macro create_bootstrap_mapping_dev\n\tand\t$5, $0, #(ARM_TT_L2_INDEX_MASK)\n\tlsr\t$5, $5, #(ARM_TT_L2_SHIFT)\n\tmov\t$6, #(TTE_PGENTRIES)\n\tsub\t$5, $6, $5\n3:\tadd\t$4, $4, PGBYTES\n\tcreate_l1_table_entry\t$0, $3, $4, $6, $7, $8\n\tcmp\t$2, $5\n\tcsel\t$5, $2, $5, lt\n\tcreate_l2_block_entries_dev\t$0, $1, $4, $5, $6, $7, $8, $9\n\tsubs\t$2, $2, $5\n\tbeq\t2f\n\tadd \t$0, $0, $5, lsl #(ARM_TT_L2_SHIFT)\n\tadd \t$1, $1, $5, lsl #(ARM_TT_L2_SHIFT)\n\tmov\t$5, #(TTE_PGENTRIES)\n\tb\t3b\n2:\n.endmacro\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n\n'
+t15 = t15[:t15.index(dd_anchor)] + dev_macros + t15[t15.index(dd_anchor):]
+dd_vp = '\tcreate_bootstrap_mapping x0,  x4,  x5, x1, x2, x6, x10, x11, x12, x13\n'
+if t15.count(dd_vp) != 1:
+    raise SystemExit('DD start.s V=P mapping anchor missing')
+dd_map = '\tcreate_bootstrap_mapping x0,  x4,  x5, x1, x2, x6, x10, x11, x12, x13\n#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* DD: identity-map the video/MMIO window 0xC0000000-0xFFFFFFFF (1 GiB, 2 MiB blocks)\n\t * as Device-nGnRnE in the V=P bootstrap tables so the early framebuffer console\n\t * (base 0xFC900000) can draw before arm_vm_init builds the final IO mappings. */\n\tMOV64\tx0, 0xC0000000\n\tmov\tx4, x0\n\tmov\tx5, #(0x40000000 >> ARM_TT_L2_SHIFT)\n\tcreate_bootstrap_mapping_dev x0, x4, x5, x1, x2, x6, x10, x11, x12, x13\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n'
+t15 = t15[:t15.index(dd_vp)] + dd_map + t15[t15.index(dd_vp) + len(dd_vp):]
+pss.write_text(t15)
+print('DD-EARLY-VIDEO-MAPPING-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
