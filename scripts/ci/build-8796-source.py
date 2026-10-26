@@ -68,22 +68,24 @@ t = t.replace(a, ('LEXT(start_first_cpu)\n\n'
     '\tmov\t\tx0, x15\n\n'
     '\t// Unlock the core for debugging'), 1)
 print('ENTRY-FIX-OK')
-b = re.search(r'#if defined\(BCM2837\)\s*\n\s*// Setup timer interrupt routing', t)
+b = re.search(r'(?m)^#if[^\n]*\n(?=\s*// Setup timer interrupt routing)', t)
 if b:
-    t = t[:b.start()] + '#if defined(BCM2837) && defined(APPLE_ARM64_ARCH_FAMILY)\n' + b.group(0).split('\n', 1)[1] + t[b.end():]
+    t = t[:b.start()] + '#if defined(BCM2837) && defined(APPLE_ARM64_ARCH_FAMILY)\n' + t[b.end():]
     print('BCM-GUARD-OK')
 else:
-    i = t.find('BCM2837')
-    print('BCM-ANCHOR-MISSING idx', i)
-    print('\n'.join(t[max(0, i - 300):i + 900].splitlines()))
+    i = t.find('// Setup timer interrupt routing')
+    if i >= 0:
+        j = t.index('#endif', i)
+        t = t[:i] + '#if defined(APPLE_ARM64_ARCH_FAMILY)  /* luming: no BCM2837 timer on UEFI */\n' + t[i:j] + '#endif' + t[j + 6:]
+        print('BCM-BLOCK-GUARDED-BY-WRAP')
+    else:
+        print('BCM-TIMER-BLOCK-NOT-FOUND')
 c = re.search(r'#if !VMAPPLE\n(\tMOV64   x1, SCTLR_EL1_DEFAULT\n\tcmp\t\tx0, x1\n\tbne\t\t\.\n)#endif /\* !VMAPPLE \*/', t)
 if c:
     t = t[:c.start()] + '#if !VMAPPLE && defined(APPLE_ARM64_ARCH_FAMILY)\n' + c.group(1) + '#endif /* !VMAPPLE && APPLE_ARM64_ARCH_FAMILY */' + t[c.end():]
     print('SCTLR-GUARD-OK')
 else:
-    i = t.find('#if !VMAPPLE')
-    print('SCTLR-ANCHOR-MISSING idx', i)
-    print('\n'.join(t[max(0, i - 200):i + 700].splitlines()))
+    print('SCTLR-ANCHOR-MISSING')
 p.write_text(t)
 print('LUMING-START-FIX-DONE')
 PY
