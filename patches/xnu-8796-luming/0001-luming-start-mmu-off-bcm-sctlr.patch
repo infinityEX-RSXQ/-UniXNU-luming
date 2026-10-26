@@ -1,0 +1,47 @@
+--- a/osfmk/arm64/start.s
++++ b/osfmk/arm64/start.s
+@@ -454,8 +454,17 @@
+  */
+ 	.align 2
+ 	.globl EXT(start_first_cpu)
+ LEXT(start_first_cpu)
++
++	/* luming: UEFI/DarwinBoot may hand off with MMU enabled; start.s assumes MMU is off */
++	mov		x15, x0
++	mrs		x16, SCTLR_EL1
++	mov		x17, #1
++	bic		x16, x16, x17
++	msr		SCTLR_EL1, x16
++	isb		sy
++	mov		x0, x15
+ 
+ 	// Unlock the core for debugging
+ 	msr		OSLAR_EL1, xzr
+ 	msr		DAIFSet, #(DAIFSC_ALL)				// Disable all interrupts
+@@ -685,9 +694,9 @@
+ 	tlbi	vmalle1
+ 	dsb		ish
+ 
+ 
+-#if defined(BCM2837)
++#if defined(BCM2837) && defined(APPLE_ARM64_ARCH_FAMILY)
+ 	// Setup timer interrupt routing; must be done before MMU is enabled
+ 	mrs		x15, MPIDR_EL1						// Load MPIDR to get CPU number
+ 	and		x15, x15, #0xFF						// CPU number is in MPIDR Affinity Level 0
+ 	mov		x0, #0x4000
+@@ -744,13 +753,13 @@
+ 	MOV64   x0, SCTLR_EL1_DEFAULT
+ 	MSR_SCTLR_EL1_X0
+ 	isb		sy
+ 
+-#if !VMAPPLE
++#if !VMAPPLE && defined(APPLE_ARM64_ARCH_FAMILY)
+ 	MOV64   x1, SCTLR_EL1_DEFAULT
+ 	cmp		x0, x1
+ 	bne		.
+-#endif /* !VMAPPLE */
++#endif /* !VMAPPLE && APPLE_ARM64_ARCH_FAMILY */
+ 
+ #if (!CONFIG_KERNEL_INTEGRITY || (CONFIG_KERNEL_INTEGRITY && !defined(KERNEL_INTEGRITY_WT)))
+ 	/* Watchtower
+ 	 *
