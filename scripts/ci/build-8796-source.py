@@ -48,6 +48,47 @@ def capture_kernel_make(script):
     captured += '"${NUWA_KERNEL_MAKE[@]}"'
     injection = r"""
 python3 - <<'PY'
+import re, pathlib
+p = pathlib.Path('.cache/xnu-work/osfmk/arm64/start.s')
+t = p.read_text(encoding='utf-8', errors='replace')
+t = t.replace('\r\n', '\n').replace('\r', '\n')
+a = 'LEXT(start_first_cpu)\n\n\t// Unlock the core for debugging'
+if t.count(a) != 1:
+    i = t.find('LEXT(start_first_cpu)')
+    print('ENTRY-ANCHOR-MISSING count', t.count(a), 'at', i)
+    raise SystemExit('entry anchor missing')
+t = t.replace(a, ('LEXT(start_first_cpu)\n\n'
+    '\t/* luming: UEFI/DarwinBoot may hand off with MMU enabled; start.s assumes MMU is off */\n'
+    '\tmov\t\tx15, x0\n'
+    '\tmrs\t\tx16, SCTLR_EL1\n'
+    '\tmov\t\tx17, #1\n'
+    '\tbic\t\tx16, x16, x17\n'
+    '\tmsr\t\tSCTLR_EL1, x16\n'
+    '\tisb\t\tsy\n'
+    '\tmov\t\tx0, x15\n\n'
+    '\t// Unlock the core for debugging'), 1)
+print('ENTRY-FIX-OK')
+b = re.search(r'#if defined\(BCM2837\)\s*\n\s*// Setup timer interrupt routing', t)
+if b:
+    t = t[:b.start()] + '#if defined(BCM2837) && defined(APPLE_ARM64_ARCH_FAMILY)\n' + b.group(0).split('\n', 1)[1] + t[b.end():]
+    print('BCM-GUARD-OK')
+else:
+    i = t.find('BCM2837')
+    print('BCM-ANCHOR-MISSING idx', i)
+    print('\n'.join(t[max(0, i - 300):i + 900].splitlines()))
+c = re.search(r'#if !VMAPPLE\n(\tMOV64   x1, SCTLR_EL1_DEFAULT\n\tcmp\t\tx0, x1\n\tbne\t\t\.\n)#endif /\* !VMAPPLE \*/', t)
+if c:
+    t = t[:c.start()] + '#if !VMAPPLE && defined(APPLE_ARM64_ARCH_FAMILY)\n' + c.group(1) + '#endif /* !VMAPPLE && APPLE_ARM64_ARCH_FAMILY */' + t[c.end():]
+    print('SCTLR-GUARD-OK')
+else:
+    i = t.find('#if !VMAPPLE')
+    print('SCTLR-ANCHOR-MISSING idx', i)
+    print('\n'.join(t[max(0, i - 200):i + 700].splitlines()))
+p.write_text(t)
+print('LUMING-START-FIX-DONE')
+PY
+"""
+python3 - <<'PY'
 import pathlib
 p = pathlib.Path('.cache/xnu-work/osfmk/arm64/start.s')
 t = p.read_text()
