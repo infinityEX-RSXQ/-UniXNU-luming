@@ -350,6 +350,28 @@ cl_luming = ('#else /* luming: minimal UEFI DT - skip /chosen/memory-map TrustCa
 t11 = cl_head + cl_luming + cl_tail
 pav.write_text(t11)
 print('CL-VM-PROT-INIT-LUMING-NO-DT-OK')
+# ---- CT: PE_get_random_seed luming path is DT-free (CNTVCT seed) ----
+pgen2 = base / 'pexpert/gen/pe_gen.c'
+t12 = pgen2.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+ct_old = 'uint32_t\nPE_get_random_seed(unsigned char *dst_random_seed, uint32_t request_size)\n{\n\tDTEntry         entryP;'
+if t12.count(ct_old) != 1:
+    print('CT-RANDOM-SEED-ANCHOR-MISSING', t12.count(ct_old))
+    raise SystemExit('PE_get_random_seed anchor missing')
+ct_new = ('uint32_t\nPE_get_random_seed(unsigned char *dst_random_seed, uint32_t request_size)\n{\n'
+          '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n'
+          '\t/* luming: minimal UEFI DT - seed from CNTVCT_EL0, no SecureDT lookups */\n'
+          '\tuint64_t cnt = 0;\n'
+          '\t__asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(cnt));\n'
+          '\tuint32_t n = (request_size < sizeof(cnt)) ? request_size : (uint32_t)sizeof(cnt);\n'
+          '\tfor (uint32_t i = 0; i < n; i++) {\n'
+          '\t\tdst_random_seed[i] = (unsigned char)(cnt >> (8 * i));\n'
+          '\t}\n'
+          '\treturn n;\n'
+          '#endif\n'
+          '\tDTEntry         entryP;')
+t12 = t12.replace(ct_old, ct_new, 1)
+pgen2.write_text(t12)
+print('CT-PE-RANDOM-SEED-DT-FREE-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
