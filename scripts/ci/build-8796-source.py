@@ -333,6 +333,23 @@ if t10.count(cj_end) != 1:
 t10 = t10.replace(cj_end, cj_end.replace('}\n', '#endif /* !APPLE_ARM64_ARCH_FAMILY: luming single-CPU topology above */\n}\n'), 1)
 pmr2.write_text(t10)
 print('CJ-ML-PARSE-LUMING-TOPOLOGY-OK')
+# ---- CL: arm_vm_prot_init luming path skips /chosen/memory-map DT parsing ----
+pav = base / 'osfmk/arm64/arm_vm_init.c'
+t11 = pav.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+cl_idx = t11.index('\nnoAuxKC:\n')
+cl_head, cl_tail = t11[:cl_idx], t11[cl_idx:]
+cl_ah = '\tDTEntry memory_map;\n\tint err;\n\n'
+if cl_head.count(cl_ah) != 1:
+    print('CL-ANCHOR-MISSING', cl_head.count(cl_ah))
+    raise SystemExit('arm_vm_prot_init anchor missing')
+cl_head = cl_head.replace(cl_ah, cl_ah + '#if defined(APPLE_ARM64_ARCH_FAMILY)\n', 1)
+cl_luming = ('#else /* luming: minimal UEFI DT - skip /chosen/memory-map TrustCache/AuxKC parsing */\n'
+             '\t(void)memory_map;\n\t(void)err;\n'
+             '\tsegEXTRADATA = 0;\n\tsegSizeEXTRADATA = 0;\n'
+             '\tsegTRUSTCACHE = 0;\n\tsegSizeTRUSTCACHE = 0;\n#endif\n')
+t11 = cl_head + cl_luming + cl_tail
+pav.write_text(t11)
+print('CL-VM-PROT-INIT-LUMING-NO-DT-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
