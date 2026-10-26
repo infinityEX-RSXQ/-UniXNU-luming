@@ -372,6 +372,31 @@ ct_new = ('uint32_t\nPE_get_random_seed(unsigned char *dst_random_seed, uint32_t
 t12 = t12.replace(ct_old, ct_new, 1)
 pgen2.write_text(t12)
 print('CT-PE-RANDOM-SEED-DT-FREE-OK')
+# ---- CU: luming early_random is a dependency-free CNTVCT+counter generator ----
+pru = base / 'osfmk/prng/prng_random.c'
+t13 = pru.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+cu_h_old = 'uint64_t\nearly_random(void)\n{\n\tuint64_t result;'
+if t13.count(cu_h_old) != 1:
+    print('CU-EARLY-RANDOM-HEAD-ANCHOR-MISSING', t13.count(cu_h_old))
+    raise SystemExit('early_random head anchor missing')
+cu_h_new = ('uint64_t\nearly_random(void)\n{\n'
+            '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n'
+            '\t/* luming: dependency-free early random (no bootseed/ccdigest/ccdrbg/ml_get_timebase) */\n'
+            '\tstatic uint64_t cu_counter = 0;\n'
+            '\tuint64_t cu_cnt = 0;\n'
+            '\t__asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(cu_cnt));\n'
+            '\tcu_counter++;\n'
+            '\treturn (cu_cnt * 6364136223846793005ULL) ^ (cu_counter * 1442695040888963407ULL);\n'
+            '#else\n'
+            '\tuint64_t result;')
+t13 = t13.replace(cu_h_old, cu_h_new, 1)
+cu_e_old = '\n\tread_erandom(&result, sizeof(result));\n\n\treturn result;\n}\n'
+if t13.count(cu_e_old) != 1:
+    print('CU-EARLY-RANDOM-END-ANCHOR-MISSING', t13.count(cu_e_old))
+    raise SystemExit('early_random end anchor missing')
+t13 = t13.replace(cu_e_old, cu_e_old.replace('\n}\n', '\n#endif /* !APPLE_ARM64_ARCH_FAMILY: luming dependency-free generator above */\n}\n'), 1)
+pru.write_text(t13)
+print('CU-EARLY-RANDOM-DEPENDENCY-FREE-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
