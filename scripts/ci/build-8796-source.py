@@ -397,6 +397,25 @@ if t13.count(cu_e_old) != 1:
 t13 = t13.replace(cu_e_old, cu_e_old.replace('\n}\n', '\n#endif /* !APPLE_ARM64_ARCH_FAMILY: luming dependency-free generator above */\n}\n'), 1)
 pru.write_text(t13)
 print('CU-EARLY-RANDOM-DEPENDENCY-FREE-OK')
+# ---- CX: luming SECURITY_READ_ONLY_LATE variables writable (loader maps __DATA_CONST RO) ----
+psk = base / 'libkern/libkern/section_keywords.h'
+t14 = psk.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+cx_old = '#define MARK_AS_FIXUP_TEXT\n\n#endif /* _SECTION_KEYWORDS_H_ */'
+if t14.count(cx_old) != 1:
+    print('CX-SECTION-KEYWORDS-ANCHOR-MISSING', t14.count(cx_old))
+    raise SystemExit('section_keywords anchor missing')
+cx_new = ('#define MARK_AS_FIXUP_TEXT\n\n'
+          '#if !defined(APPLE_ARM64_ARCH_FAMILY)\n'
+          '/* luming: the minimal UEFI/DarwinBoot loader maps __DATA_CONST read-only; the\n'
+          ' * SECURITY_READ_ONLY_LATE variables are written during early boot (e.g. physmap_base\n'
+          ' * in arm_vm_init), so keep them in writable data for non-Apple builds. */\n'
+          '#undef __security_const_late\n'
+          '#define __security_const_late\n'
+          '#endif /* !APPLE_ARM64_ARCH_FAMILY */\n\n'
+          '#endif /* _SECTION_KEYWORDS_H_ */')
+t14 = t14.replace(cx_old, cx_new, 1)
+psk.write_text(t14)
+print('CX-LATE-CONST-WRITABLE-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
