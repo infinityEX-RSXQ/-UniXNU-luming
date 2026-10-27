@@ -502,7 +502,7 @@ def fk_edit(path, fn):
     t = fp.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
     return fp, t
 helper = '''
-#if !defined(APPLE_ARM64_ARCH_FAMILY) && defined(LUMING_EARLY_CONSOLE)
+#if !defined(APPLE_ARM64_ARCH_FAMILY)
 /* luming source-level early console: append stage ids to a static RAM buffer, then
  * flush directly to the framebuffer (0xFC900000, 4944B/row, 1236x2750x32) only after
  * the TTBR switch (set_mmu_ttb), so no framebuffer write happens before the switch. */
