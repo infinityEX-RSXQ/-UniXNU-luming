@@ -431,53 +431,6 @@ dd_map = '\tcreate_bootstrap_mapping x0,  x4,  x5, x1, x2, x6, x10, x11, x12, x1
 t15 = t15[:t15.index(dd_vp)] + dd_map + t15[t15.index(dd_vp) + len(dd_vp):]
 pss.write_text(t15)
 print('DD-EARLY-VIDEO-MAPPING-OK')
-# ---- FK: luming source-level early console (RAM log + post-TTBR framebuffer flush) ----
-def fk_edit(path, fn):
-    fp = base / path
-    if not fp.is_file():
-        print('FK-MISSING-FILE', path)
-        return None
-    t = fp.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
-    return fp, t
-helper = ''''''
-rv = fk_edit('osfmk/arm64/arm_vm_init.c', 1)
-if rv is None:
-    raise SystemExit('FK arm_vm_init missing')
-fp, t = rv
-if 'luming_log' not in t:
-    idx = t.find('#include ')
-    t = t[:idx] + helper + t[idx:]
-    def ins_after(anchor, text):
-        global t
-        if anchor in t: t = t.replace(anchor, anchor + text, 1); print('FK-ANCHOR-OK')
-        else: print('FK-ANCHOR-MISS', anchor[:40])
-    ins_after('gVirtBase = args->virtBase;\n', '\tluming_log(1);\n')
-    ins_after('physmap_base = phystokv(args->topOfKernelData);\n', '\tluming_log(2);\n')
-    ins_after('physmap_base += physmap_slide;\n', '\tluming_log(3);\n')
-    pos = t.find('set_mmu_ttb(')
-    if pos >= 0:
-        e = t.find(';', pos)
-        t = t[:e+1] + '\n\tluming_log(4);\n\tluming_flush();\n' + t[e+1:]
-        print('FK-TTB-OK')
-    else:
-        print('FK-TTB-MISS')
-    fp.write_text(t)
-for path, anch, code in (('osfmk/kern/startup.c', 'void\nmachine_startup(boot_args *args)\n{', '\tluming_log(11); luming_flush();\n'),
-                          ('osfmk/kern/startup.c', 'void\nkernel_bootstrap(void)\n{', '\tluming_log(13); luming_flush();\n'),
-                          ('osfmk/kern/startup.c', 'void\nkernel_bootstrap_thread(void)\n{', '\tluming_log(16); luming_flush();\n'),
-                          ('osfmk/arm64/machine_routines.c', 'void\nmachine_conf(void)\n{', '\tluming_log(12); luming_flush();\n')):
-    rv = fk_edit(path, 1)
-    if rv is None: continue
-    fp2, t2 = rv
-    if 'luming_log' not in t2:
-        t2 = t2.replace('#include ', 'extern void luming_log(unsigned); extern void luming_flush(void);\n#include ', 1)
-    if anch in t2:
-        t2 = t2.replace(anch, anch + code, 1)
-        print('FK-INSERT-OK', path)
-    else:
-        print('FK-INSERT-MISS', path)
-    fp2.write_text(t2)
-print('FK-SOURCE-EARLY-CONSOLE-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
