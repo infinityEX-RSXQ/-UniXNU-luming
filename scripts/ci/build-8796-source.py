@@ -501,42 +501,7 @@ def fk_edit(path, fn):
         return None
     t = fp.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
     return fp, t
-helper = '''
-#if !defined(APPLE_ARM64_ARCH_FAMILY)
-/* luming source-level early console: append stage ids to a static RAM buffer, then
- * flush directly to the framebuffer (0xFC900000, 4944B/row, 1236x2750x32) only after
- * the TTBR switch (set_mmu_ttb), so no framebuffer write happens before the switch. */
-typedef unsigned char lm_u8; typedef unsigned long lm_u64;
-static lm_u8 lm_stages[64];
-static unsigned lm_count;
-void luming_log(unsigned stage) { if (lm_count < 64) lm_stages[lm_count++] = (lm_u8)stage; }
-static const lm_u8 lm_digits[10][5] = {
-  {0x7,0x5,0x5,0x5,0x7},{0x2,0x6,0x2,0x2,0x7},{0x7,0x1,0x7,0x4,0x7},{0x7,0x1,0x7,0x1,0x7},
-  {0x5,0x5,0x7,0x1,0x1},{0x7,0x4,0x7,0x1,0x7},{0x7,0x4,0x7,0x5,0x7},{0x7,0x1,0x1,0x1,0x1},
-  {0x7,0x5,0x7,0x5,0x7},{0x7,0x5,0x7,0x1,0x7} };
-void luming_flush(void) {
-  volatile lm_u64 *fb = (volatile lm_u64 *)0xFC900000UL;
-  lm_u64 rowbytes = 4944; unsigned i, d, r, c, sy, sx;
-  for (i = 0; i < lm_count; i++) {
-    unsigned v = lm_stages[i], tens = v / 10, ones = v % 10;
-    lm_u64 y = i * 42; unsigned x = 4;
-    for (d = 0; d < 2; d++) {
-      const lm_u8 *g = lm_digits[d == 0 ? (tens % 10) : (ones % 10)];
-      for (r = 0; r < 5; r++) for (sy = 0; sy < 4; sy++) {
-        lm_u64 *line = fb + ((y + r * 4 + sy) * rowbytes) / 8 + (x) / 8;
-        for (c = 0; c < 3; c++) for (sx = 0; sx < 4; sx++)
-          line[(c * 4 + sx) / 8] |= ((lm_u64)((g[r] >> (2 - c)) & 1)) << ((((c * 4 + sx)) % 8) * 8);
-      }
-      x += 16;
-    }
-  }
-  __asm__ volatile("dsb sy" ::: "memory");
-}
-#else
-void luming_log(unsigned stage) { (void)stage; }
-void luming_flush(void) { }
-#endif
-'''
+helper = ''''''
 rv = fk_edit('osfmk/arm64/arm_vm_init.c', 1)
 if rv is None:
     raise SystemExit('FK arm_vm_init missing')
