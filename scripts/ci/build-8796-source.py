@@ -472,6 +472,21 @@ else:
     fp.write_text(tc)
     print('DO-HALT-FREEZE-OK', fp.name)
 print('DO-SOURCE-DIAGNOSTICS-OK')
+# ---- DX: luming single-CPU-safe ml_cpu_down (no IPI-failure panic) ----
+pmc = base / 'osfmk/arm64/machine_routines.c'
+t17 = pmc.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+if 'ml_get_cpu_count() <= 1' in t17 and 'ml_cpu_down' in t17:
+    print('DX already applied')
+else:
+    i17 = t17.find('ml_cpu_down(')
+    if i17 < 0:
+        raise SystemExit('DX ml_cpu_down not found')
+    b17 = t17.find('{', i17)
+    ins17 = '\n#if !defined(APPLE_ARM64_ARCH_FAMILY)\n\t/* luming single-CPU bring-up: no remote CPUs to IPI or migrate to;\n\t * mark the CPU not running and return instead of the IPI-failure panic. */\n\tif (ml_get_cpu_count() <= 1) {\n\t\tcpu_running = FALSE;\n\t\treturn;\n\t}\n#endif /* !APPLE_ARM64_ARCH_FAMILY */\n'
+    t17 = t17[:b17+1] + ins17 + t17[b17+1:]
+    pmc.write_text(t17)
+    print('DX-ML-CPU-DOWN-SINGLE-CPU-OK')
+print('DX-SOURCE-DIAGNOSTICS-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
