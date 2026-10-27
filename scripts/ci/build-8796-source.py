@@ -493,6 +493,88 @@ else:
     pmc.write_text(t17)
     print('DX-SINGLE-CPU-ML-CPU-DOWN')
 print('DX-SOURCE-DIAGNOSTICS-OK')
+# ---- FK: luming source-level early console (RAM log + post-TTBR framebuffer flush) ----
+def fk_edit(path, fn):
+    fp = base / path
+    if not fp.is_file():
+        print('FK-MISSING-FILE', path)
+        return None
+    t = fp.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n').replace('\r', '\n')
+    return fp, t
+helper = '''
+#if !defined(APPLE_ARM64_ARCH_FAMILY) && defined(LUMING_EARLY_CONSOLE)
+/* luming source-level early console: append stage ids to a static RAM buffer, then
+ * flush directly to the framebuffer (0xFC900000, 4944B/row, 1236x2750x32) only after
+ * the TTBR switch (set_mmu_ttb), so no framebuffer write happens before the switch. */
+typedef unsigned char lm_u8; typedef unsigned long lm_u64;
+static lm_u8 lm_stages[64];
+static unsigned lm_count;
+void luming_log(unsigned stage) { if (lm_count < 64) lm_stages[lm_count++] = (lm_u8)stage; }
+static const lm_u8 lm_digits[10][5] = {
+  {0x7,0x5,0x5,0x5,0x7},{0x2,0x6,0x2,0x2,0x7},{0x7,0x1,0x7,0x4,0x7},{0x7,0x1,0x7,0x1,0x7},
+  {0x5,0x5,0x7,0x1,0x1},{0x7,0x4,0x7,0x1,0x7},{0x7,0x4,0x7,0x5,0x7},{0x7,0x1,0x1,0x1,0x1},
+  {0x7,0x5,0x7,0x5,0x7},{0x7,0x5,0x7,0x1,0x7} };
+void luming_flush(void) {
+  volatile lm_u64 *fb = (volatile lm_u64 *)0xFC900000UL;
+  lm_u64 rowbytes = 4944; unsigned i, d, r, c, sy, sx;
+  for (i = 0; i < lm_count; i++) {
+    unsigned v = lm_stages[i], tens = v / 10, ones = v % 10;
+    lm_u64 y = i * 42; unsigned x = 4;
+    for (d = 0; d < 2; d++) {
+      const lm_u8 *g = lm_digits[d == 0 ? (tens % 10) : (ones % 10)];
+      for (r = 0; r < 5; r++) for (sy = 0; sy < 4; sy++) {
+        lm_u64 *line = fb + ((y + r * 4 + sy) * rowbytes) / 8 + (x) / 8;
+        for (c = 0; c < 3; c++) for (sx = 0; sx < 4; sx++)
+          line[(c * 4 + sx) / 8] |= ((lm_u64)((g[r] >> (2 - c)) & 1)) << ((((c * 4 + sx)) % 8) * 8);
+      }
+      x += 16;
+    }
+  }
+  __asm__ volatile("dsb sy" ::: "memory");
+}
+#else
+void luming_log(unsigned stage) { (void)stage; }
+void luming_flush(void) { }
+#endif
+'''
+rv = fk_edit('osfmk/arm64/arm_vm_init.c', 1)
+if rv is None:
+    raise SystemExit('FK arm_vm_init missing')
+fp, t = rv
+if 'luming_log' not in t:
+    idx = t.find('#include ')
+    t = t[:idx] + helper + t[idx:]
+    def ins_after(anchor, text):
+        global t
+        if anchor in t: t = t.replace(anchor, anchor + text, 1); print('FK-ANCHOR-OK')
+        else: print('FK-ANCHOR-MISS', anchor[:40])
+    ins_after('gVirtBase = args->virtBase;\n', '\tluming_log(1);\n')
+    ins_after('physmap_base = phystokv(args->topOfKernelData);\n', '\tluming_log(2);\n')
+    ins_after('physmap_base += physmap_slide;\n', '\tluming_log(3);\n')
+    pos = t.find('set_mmu_ttb(')
+    if pos >= 0:
+        e = t.find(';', pos)
+        t = t[:e+1] + '\n\tluming_log(4);\n\tluming_flush();\n' + t[e+1:]
+        print('FK-TTB-OK')
+    else:
+        print('FK-TTB-MISS')
+    fp.write_text(t)
+for path, anch, code in (('osfmk/kern/startup.c', 'void\nmachine_startup(boot_args *args)\n{', '\tluming_log(11); luming_flush();\n'),
+                          ('osfmk/kern/startup.c', 'void\nkernel_bootstrap(void)\n{', '\tluming_log(13); luming_flush();\n'),
+                          ('osfmk/kern/startup.c', 'void\nkernel_bootstrap_thread(void)\n{', '\tluming_log(16); luming_flush();\n'),
+                          ('osfmk/arm64/machine_routines.c', 'void\nmachine_conf(void)\n{', '\tluming_log(12); luming_flush();\n')):
+    rv = fk_edit(path, 1)
+    if rv is None: continue
+    fp2, t2 = rv
+    if 'luming_log' not in t2:
+        t2 = t2.replace('#include ', 'extern void luming_log(unsigned); extern void luming_flush(void);\n#include ', 1)
+    if anch in t2:
+        t2 = t2.replace(anch, anch + code, 1)
+        print('FK-INSERT-OK', path)
+    else:
+        print('FK-INSERT-MISS', path)
+    fp2.write_text(t2)
+print('FK-SOURCE-EARLY-CONSOLE-OK')
 print('LUMING-CLOCK-FIXES-DONE')
 PY
 """
